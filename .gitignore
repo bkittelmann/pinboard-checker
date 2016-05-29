@@ -1,0 +1,5 @@
+logs/
+exports/
+pinboard-checker
+*.csv
+notes.md
