@@ -122,7 +122,7 @@ func worker(id int, checkJobs <-chan Bookmark, failures chan<- LookupFailure, wo
 	}
 }
 
-func failureReader(failures <-chan LookupFailure) {
+func csvFailureReader(failures <-chan LookupFailure) {
 	file, err := os.Create("failedlinks.csv")
 	if err != nil {
 		log.Fatal("Cannot create file", err)
@@ -176,7 +176,7 @@ func checkAll(bookmarkJson []byte) {
 	workgroup := new(sync.WaitGroup)
 
 	// start failure reader
-	go failureReader(failures)
+	go csvFailureReader(failures)
 
 	// start workers
 	for w := 1; w <= 10; w++ {
@@ -256,10 +256,10 @@ func handleDeleteAction(token string, resultsFileName string) {
 	}
 }
 
-func handleCheckAction(token string, inputBookmarks string) {
+func handleCheckAction(token string, inputFile string) {
 	var bookmarkJson []byte
-	if len(inputBookmarks) > 0 {
-		bookmarkJson, _ = ioutil.ReadFile(inputBookmarks)
+	if len(inputFile) > 0 {
+		bookmarkJson, _ = ioutil.ReadFile(inputFile)
 	} else {
 		bookmarkJson, _ = downloadBookmarks(token)
 	}
@@ -276,11 +276,11 @@ func main() {
 	var token string
 	flag.StringVar(&token, "token", "", "Mandatory authentication token")
 
-	var resultsSource string
-	flag.StringVar(&resultsSource, "result", "-", "File to store results in, defaults to stdout")
+	var outputFile string
+	flag.StringVar(&outputFile, "outputFile", "-", "File to store results of check operation in, defaults to stdout.")
 
-	var inputBookmarks string
-	flag.StringVar(&inputBookmarks, "inputBookmarks", "", "Path to exported bookmarks in JSON format")
+	var inputFile string
+	flag.StringVar(&inputFile, "inputFile", "", "File containing bookmarks to check. If empty it will download all bookmarks from pinboard.")
 
 	var checkAction bool
 	flag.BoolVar(&checkAction, "check", false, "Check the links of all bookmarks")
@@ -297,10 +297,10 @@ func main() {
 	}
 
 	if deleteAction {
-		handleDeleteAction(token, resultsSource)
+		handleDeleteAction(token, outputFile)
 	}
 
 	if checkAction {
-		handleCheckAction(token, inputBookmarks)
+		handleCheckAction(token, inputFile)
 	}
 }
