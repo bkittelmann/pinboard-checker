@@ -27,6 +27,8 @@ type LookupFailure struct {
 	Error    error
 }
 
+type FailureReporter func(LookupFailure)
+
 func parseJson(bookmarkJson []byte) []Bookmark {
 	var bookmarks []Bookmark
 	json.Unmarshal(bookmarkJson, &bookmarks)
@@ -107,22 +109,22 @@ func check(bookmark Bookmark) (bool, int, error) {
 	return true, headResponse.StatusCode, nil
 }
 
-func worker(id int, checkJobs <-chan Bookmark, failures chan<- LookupFailure, workgroup *sync.WaitGroup) {
+func worker(id int, checkJobs <-chan Bookmark, reporter FailureReporter, workgroup *sync.WaitGroup) {
 	defer workgroup.Done()
 
 	for bookmark := range checkJobs {
 		fmt.Fprintf(os.Stdout, "Worker %02d: Processing job for url %s\n", id, bookmark.Href)
 		valid, code, err := check(bookmark)
 		if !valid {
+			reporter(LookupFailure{bookmark, err})
 			fmt.Fprintf(os.Stdout, "Worker %02d: ERROR: %s %d %s\n", id, bookmark.Href, code, err)
-			failures <- LookupFailure{bookmark, err}
 		} else {
 			fmt.Fprintf(os.Stdout, "Worker %02d: Success for %s\n", id, bookmark.Href)
 		}
 	}
 }
 
-func csvFailureReader(failures <-chan LookupFailure) {
+func csvFailureReader(failure LookupFailure) {
 	file, err := os.Create("failedlinks.csv")
 	if err != nil {
 		log.Fatal("Cannot create file", err)
@@ -133,19 +135,21 @@ func csvFailureReader(failures <-chan LookupFailure) {
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	for failure := range failures {
-		var errorValue string
-		if failure.Error != nil {
-			errorValue = failure.Error.Error()
-		}
-
-		record := []string{
-			failure.Bookmark.Description,
-			failure.Bookmark.Href,
-			errorValue,
-		}
-		writer.Write(record)
+	var errorValue string
+	if failure.Error != nil {
+		errorValue = failure.Error.Error()
 	}
+
+	record := []string{
+		failure.Bookmark.Description,
+		failure.Bookmark.Href,
+		errorValue,
+	}
+	writer.Write(record)
+}
+
+func stderrFailureReporter(failure LookupFailure) {
+	fmt.Fprintf(os.Stderr, "[ERR] %s\n", failure.Bookmark.Href)
 }
 
 func readUrlsFromFile(source string) []string {
@@ -169,35 +173,28 @@ func readUrlsFromFile(source string) []string {
 	return urls
 }
 
-func checkAll(bookmarkJson []byte) {
-	// create job and results channel
-	checkOperations := make(chan Bookmark, 10)
-	failures := make(chan LookupFailure, 10)
+func checkAll(bookmarkJson []byte, reporter FailureReporter) {
+	jobs := make(chan Bookmark, 10)
 	workgroup := new(sync.WaitGroup)
-
-	// start failure reader
-	go csvFailureReader(failures)
 
 	// start workers
 	for w := 1; w <= 10; w++ {
 		workgroup.Add(1)
-		go worker(w, checkOperations, failures, workgroup)
+		go worker(w, jobs, reporter, workgroup)
 	}
 
 	// send off URLs to check
 	for _, bookmark := range parseJson(bookmarkJson) {
-		checkOperations <- bookmark
+		jobs <- bookmark
 	}
 
-	close(checkOperations)
+	close(jobs)
 
 	log.Println("No more check jobs written")
 
 	workgroup.Wait()
 
 	log.Println("Closing failure channel")
-
-	close(failures)
 }
 
 func deleteBookmark(token string, bookmark Bookmark) {
@@ -256,14 +253,23 @@ func handleDeleteAction(token string, resultsFileName string) {
 	}
 }
 
-func handleCheckAction(token string, inputFile string) {
+func handleCheckAction(token string, inputFile string, outputFile string) {
 	var bookmarkJson []byte
 	if len(inputFile) > 0 {
 		bookmarkJson, _ = ioutil.ReadFile(inputFile)
 	} else {
 		bookmarkJson, _ = downloadBookmarks(token)
 	}
-	checkAll(bookmarkJson)
+
+	// different failure reporter depending on setting of outputFile, default to
+	// stderr simple error printing for now
+	var reporter FailureReporter
+	switch {
+	default:
+		reporter = stderrFailureReporter
+	}
+
+	checkAll(bookmarkJson, reporter)
 }
 
 func main() {
@@ -277,17 +283,19 @@ func main() {
 	flag.StringVar(&token, "token", "", "Mandatory authentication token")
 
 	var outputFile string
-	flag.StringVar(&outputFile, "outputFile", "-", "File to store results of check operation in, defaults to stdout.")
+	flag.StringVar(&outputFile, "outputFile", "-", "File to store results of check operation in, defaults to stderr")
 
 	var inputFile string
 	flag.StringVar(&inputFile, "inputFile", "", "File containing bookmarks to check. If empty it will download all bookmarks from pinboard.")
+
+	var inputFormat string
+	flag.StringVar(&inputFormat, "inputFormat", "text", "Which format the input file is in (can be 'text', 'json')")
 
 	var checkAction bool
 	flag.BoolVar(&checkAction, "check", false, "Check the links of all bookmarks")
 
 	flag.Parse()
 
-	// TODO: Validate that token got set
 	if len(token) == 0 {
 		log.Fatal("-token parameter has to be set")
 	}
@@ -301,6 +309,6 @@ func main() {
 	}
 
 	if checkAction {
-		handleCheckAction(token, inputFile)
+		handleCheckAction(token, inputFile, outputFile)
 	}
 }
