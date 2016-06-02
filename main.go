@@ -151,8 +151,8 @@ func csvFailureReader(failure LookupFailure) {
 	writer.Write(record)
 }
 
-func stderrFailureReporter(failure LookupFailure) {
-	fmt.Fprintf(os.Stderr, "[ERR] %s\n", failure.Bookmark.Href)
+func stdoutFailureReporter(failure LookupFailure) {
+	fmt.Fprintf(os.Stdout, "[ERR] %s\n", failure.Bookmark.Href)
 }
 
 func readUrlsFromFile(source string) []string {
@@ -264,7 +264,7 @@ func handleCheckAction(token string, inputFile string, outputFile string) {
 	var reporter FailureReporter
 	switch {
 	default:
-		reporter = stderrFailureReporter
+		reporter = stdoutFailureReporter
 	}
 
 	checkAll(bookmarkJson, reporter)
@@ -281,7 +281,7 @@ func main() {
 	flag.StringVar(&token, "token", "", "Mandatory authentication token")
 
 	var outputFile string
-	flag.StringVar(&outputFile, "outputFile", "-", "File to store results of check operation in, defaults to stderr")
+	flag.StringVar(&outputFile, "outputFile", "-", "File to store results of check operation in, defaults to stdout")
 
 	var inputFile string
 	flag.StringVar(&inputFile, "inputFile", "", "File containing bookmarks to check. If empty it will download all bookmarks from pinboard.")
