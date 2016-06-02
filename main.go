@@ -30,8 +30,12 @@ type LookupFailure struct {
 type FailureReporter func(LookupFailure)
 
 func debug(format string, args ...interface{}) {
-	log.Printf(format+"\n", args...)
+	if debugEnabled {
+		log.Printf(format+"\n", args...)
+	}
 }
+
+var debugEnabled bool
 
 func parseJson(bookmarkJson []byte) []Bookmark {
 	var bookmarks []Bookmark
@@ -279,6 +283,8 @@ func main() {
 
 	var token string
 	flag.StringVar(&token, "token", "", "Mandatory authentication token")
+
+	flag.BoolVar(&debugEnabled, "debug", false, "Enable debug logs, will be printed on stderr")
 
 	var outputFile string
 	flag.StringVar(&outputFile, "outputFile", "-", "File to store results of check operation in, defaults to stdout")
