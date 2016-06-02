@@ -29,6 +29,10 @@ type LookupFailure struct {
 
 type FailureReporter func(LookupFailure)
 
+func debug(format string, args ...interface{}) {
+	log.Printf(format+"\n", args...)
+}
+
 func parseJson(bookmarkJson []byte) []Bookmark {
 	var bookmarks []Bookmark
 	json.Unmarshal(bookmarkJson, &bookmarks)
@@ -59,7 +63,7 @@ func downloadBookmarks(token string) ([]byte, error) {
 	defer response.Body.Close()
 
 	if err != nil {
-		log.Printf("Error", err)
+		debug("Error %s", err)
 		return nil, err
 	}
 
@@ -101,7 +105,6 @@ func check(bookmark Bookmark) (bool, int, error) {
 		getResponse.Body.Close()
 
 		if isBadStatus(getResponse) {
-			// fmt.Printf("%s %d\n", url, getResponse.StatusCode)
 			return false, getResponse.StatusCode, err
 		}
 	}
@@ -113,13 +116,13 @@ func worker(id int, checkJobs <-chan Bookmark, reporter FailureReporter, workgro
 	defer workgroup.Done()
 
 	for bookmark := range checkJobs {
-		fmt.Fprintf(os.Stdout, "Worker %02d: Processing job for url %s\n", id, bookmark.Href)
+		debug("Worker %02d: Processing job for url %s", id, bookmark.Href)
 		valid, code, err := check(bookmark)
 		if !valid {
 			reporter(LookupFailure{bookmark, err})
-			fmt.Fprintf(os.Stdout, "Worker %02d: ERROR: %s %d %s\n", id, bookmark.Href, code, err)
+			debug("Worker %02d: ERROR: %s %d %s", id, bookmark.Href, code, err)
 		} else {
-			fmt.Fprintf(os.Stdout, "Worker %02d: Success for %s\n", id, bookmark.Href)
+			debug("Worker %02d: Success for %s\n", id, bookmark.Href)
 		}
 	}
 }
@@ -189,18 +192,13 @@ func checkAll(bookmarkJson []byte, reporter FailureReporter) {
 	}
 
 	close(jobs)
-
-	log.Println("No more check jobs written")
-
 	workgroup.Wait()
-
-	log.Println("Closing failure channel")
 }
 
 func deleteBookmark(token string, bookmark Bookmark) {
 	endpoint := buildDeleteEndpoint(token, bookmark.Href)
 
-	log.Printf("Deleting %s\n", bookmark.Href)
+	debug("Deleting %s\n", bookmark.Href)
 
 	response, err := http.Get(endpoint)
 	defer response.Body.Close()
@@ -215,7 +213,7 @@ func deleteBookmark(token string, bookmark Bookmark) {
 		log.Fatalf("ERROR: %s", err)
 	}
 
-	fmt.Printf("%s", body)
+	debug("%s", body)
 }
 
 func deleteAll(token string, reader io.Reader) {
@@ -235,15 +233,15 @@ func handleDownloadAction(token string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s", string(bookmarks))
+	debug("%s", string(bookmarks))
 }
 
 func handleDeleteAction(token string, resultsFileName string) {
 	if resultsFileName == "-" {
-		fmt.Println("Using stdin")
+		debug("Using stdin")
 		deleteAll(token, os.Stdin)
 	} else {
-		fmt.Printf("Using bookmarks from %s\n", resultsFileName)
+		debug("Using bookmarks from %s\n", resultsFileName)
 		file, err := os.Open(resultsFileName)
 		if err != nil {
 			log.Fatal("Could not read file with bookmarks to delete")
