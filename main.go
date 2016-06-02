@@ -300,6 +300,12 @@ func main() {
 
 	flag.Parse()
 
+	// at least one action flag needs to be set, print usage if no flags are present
+	if flag.NFlag() == 0 {
+		flag.Usage()
+		return
+	}
+
 	if len(token) == 0 {
 		log.Fatal("-token parameter has to be set")
 	}
