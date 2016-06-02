@@ -90,19 +90,16 @@ func check(bookmark Bookmark) (bool, int, error) {
 	url := bookmark.Href
 	headResponse, err := client.Head(url)
 	if err != nil {
-		// fmt.Printf("%s error: %s\n", url, err)
 		return false, -1, err
 	}
 
 	headResponse.Body.Close()
 
 	if isBadStatus(headResponse) {
-		// fmt.Fprintf(os.Stderr, "Trying a GET request to retrieve %s\n", url)
 		getResponse, err := client.Get(url)
 
 		if err != nil {
 			getResponse.Body.Close()
-			// fmt.Printf("%s error: %s\n", url, err)
 			return false, -1, err
 		}
 
