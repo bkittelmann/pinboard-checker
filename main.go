@@ -234,7 +234,7 @@ func handleDownloadAction(token string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	debug("%s", string(bookmarks))
+	fmt.Printf("%s", string(bookmarks))
 }
 
 func handleDeleteAction(token string, resultsFileName string) {
