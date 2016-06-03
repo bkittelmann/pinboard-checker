@@ -44,7 +44,7 @@ func deleteAll(token string, reader io.Reader) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		url := strings.TrimSpace(scanner.Text())
-		deleteBookmark(token, Bookmark{url, ""})
+		deleteBookmark(token, Bookmark{Href: url, Description: ""})
 	}
 
 	if err := scanner.Err(); err != nil {
