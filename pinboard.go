@@ -55,6 +55,11 @@ func downloadBookmarks(token string) ([]byte, error) {
 	return ioutil.ReadAll(response.Body)
 }
 
+func getAllBookmarks(token string) ([]Bookmark, error) {
+	bookmarkJson, err := downloadBookmarks(token)
+	return parseJson(bookmarkJson), err
+}
+
 func deleteBookmark(token string, bookmark Bookmark) {
 	endpoint := buildDeleteEndpoint(token, bookmark.Href)
 

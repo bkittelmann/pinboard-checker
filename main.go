@@ -76,11 +76,12 @@ func handleDeleteAction(token string, resultsFileName string) {
 }
 
 func handleCheckAction(token string, inputFile string, outputFile string) {
-	var bookmarkJson []byte
+	var bookmarks []Bookmark
 	if len(inputFile) > 0 {
-		bookmarkJson, _ = ioutil.ReadFile(inputFile)
+		bookmarkJson, _ := ioutil.ReadFile(inputFile)
+		bookmarks = parseJson(bookmarkJson)
 	} else {
-		bookmarkJson, _ = downloadBookmarks(token)
+		bookmarks, _ = getAllBookmarks(token)
 	}
 
 	// different failure reporter depending on setting of outputFile, default to
@@ -91,7 +92,7 @@ func handleCheckAction(token string, inputFile string, outputFile string) {
 		reporter = stdoutFailureReporter
 	}
 
-	checkAll(bookmarkJson, reporter)
+	checkAll(bookmarks, reporter)
 }
 
 func main() {

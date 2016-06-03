@@ -94,7 +94,7 @@ func stdoutFailureReporter(failure LookupFailure) {
 	fmt.Fprintf(os.Stdout, "[ERR] %s\n", failure.Bookmark.Href)
 }
 
-func checkAll(bookmarkJson []byte, reporter FailureReporter) {
+func checkAll(bookmarks []Bookmark, reporter FailureReporter) {
 	jobs := make(chan Bookmark, 10)
 	workgroup := new(sync.WaitGroup)
 
@@ -105,7 +105,7 @@ func checkAll(bookmarkJson []byte, reporter FailureReporter) {
 	}
 
 	// send off URLs to check
-	for _, bookmark := range parseJson(bookmarkJson) {
+	for _, bookmark := range bookmarks {
 		jobs <- bookmark
 	}
 
