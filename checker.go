@@ -3,6 +3,7 @@ package pinboardchecker
 import (
 	"encoding/csv"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -90,8 +91,15 @@ func csvFailureReader(failure LookupFailure) {
 	writer.Write(record)
 }
 
-func stdoutFailureReporter(failure LookupFailure) {
-	fmt.Fprintf(os.Stdout, "[ERR] %s\n", failure.Bookmark.Href)
+func simpleFailureReporter(writers ...io.Writer) FailureReporter {
+	if len(writers) == 0 {
+		writers = append(writers, os.Stdout)
+	}
+	return func(failure LookupFailure) {
+		for _, writer := range writers {
+			fmt.Fprintf(writer, "[ERR] %s\n", failure.Bookmark.Href)
+		}
+	}
 }
 
 func checkAll(bookmarks []Bookmark, reporter FailureReporter) {
