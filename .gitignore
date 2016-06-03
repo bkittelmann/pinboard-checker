@@ -3,3 +3,4 @@ exports/
 pinboard-checker
 *.csv
 notes.md
+*.out
