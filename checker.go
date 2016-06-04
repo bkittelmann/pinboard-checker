@@ -6,6 +6,11 @@ import (
 	"sync"
 )
 
+type LookupFailure struct {
+	Bookmark Bookmark
+	Error    error
+}
+
 type Reporter interface {
 	onFailure(failure LookupFailure)
 	onSuccess(bookmark Bookmark)

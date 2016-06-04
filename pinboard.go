@@ -13,11 +13,6 @@ type Bookmark struct {
 	Description string
 }
 
-type LookupFailure struct {
-	Bookmark Bookmark
-	Error    error
-}
-
 func parseJson(bookmarkJson []byte) []Bookmark {
 	var bookmarks []Bookmark
 	json.Unmarshal(bookmarkJson, &bookmarks)
