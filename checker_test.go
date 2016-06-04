@@ -1,4 +1,4 @@
-package pinboardchecker
+package main
 
 import (
 	"bytes"
@@ -23,10 +23,14 @@ func TestCheckBadHttpStatus(t *testing.T) {
 }
 
 func TestSimpleReporterShowingAFailure(t *testing.T) {
+	verbose := false
 	var buffer bytes.Buffer
 
-	bookmarks := []Bookmark{Bookmark{Href: "http://httpbin.org/status/404"}}
-	checkAll(bookmarks, newSimpleFailureReporter(&buffer))
+	bookmarks := []Bookmark{
+		Bookmark{Href: "http://httpbin.org/status/404"},
+		Bookmark{Href: "http://httpbin.org/status/200"},
+	}
+	checkAll(bookmarks, newSimpleFailureReporter(verbose, &buffer))
 
 	lineCount := strings.Count(buffer.String(), "\n")
 
@@ -36,10 +40,13 @@ func TestSimpleReporterShowingAFailure(t *testing.T) {
 }
 
 func TestSimpleReporterShowingASucessInVerboseMode(t *testing.T) {
+	verbose := true
 	var buffer bytes.Buffer
 
-	bookmarks := []Bookmark{Bookmark{Href: "http://httpbin.org/status/200"}}
-	checkAll(bookmarks, newSimpleFailureReporter(&buffer))
+	bookmarks := []Bookmark{
+		Bookmark{Href: "http://httpbin.org/status/200"},
+	}
+	checkAll(bookmarks, newSimpleFailureReporter(verbose, &buffer))
 
 	lineCount := strings.Count(buffer.String(), "\n")
 

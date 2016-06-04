@@ -1,4 +1,4 @@
-package pinboardchecker
+package main
 
 import (
 	"net/http"

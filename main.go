@@ -1,4 +1,4 @@
-package pinboardchecker
+package main
 
 import (
 	"bufio"
@@ -75,7 +75,7 @@ func handleDeleteAction(token string, resultsFileName string) {
 	}
 }
 
-func handleCheckAction(token string, inputFile string, outputFile string) {
+func handleCheckAction(token string, inputFile string, outputFile string, verbose bool) {
 	var bookmarks []Bookmark
 	if len(inputFile) > 0 {
 		bookmarkJson, _ := ioutil.ReadFile(inputFile)
@@ -89,7 +89,7 @@ func handleCheckAction(token string, inputFile string, outputFile string) {
 	var reporter Reporter
 	switch {
 	default:
-		reporter = newSimpleFailureReporter()
+		reporter = newSimpleFailureReporter(verbose)
 	}
 
 	checkAll(bookmarks, reporter)
@@ -119,6 +119,9 @@ func main() {
 	var checkAction bool
 	flag.BoolVar(&checkAction, "check", false, "Check the links of all bookmarks")
 
+	var verbose bool
+	flag.BoolVar(&verbose, "verbose", false, "Report successful link lookups")
+
 	flag.Parse()
 
 	// at least one action flag needs to be set, print usage if no flags are present
@@ -140,6 +143,6 @@ func main() {
 	}
 
 	if checkAction {
-		handleCheckAction(token, inputFile, outputFile)
+		handleCheckAction(token, inputFile, outputFile, verbose)
 	}
 }
