@@ -1,11 +1,8 @@
 package pinboardchecker
 
 import (
-	"fmt"
-	"io"
 	"net/http"
 	"net/http/cookiejar"
-	"os"
 	"sync"
 )
 
@@ -66,31 +63,6 @@ func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *syn
 			reporter.onSuccess(bookmark)
 			debug("Worker %02d: Success for %s\n", id, bookmark.Href)
 		}
-	}
-}
-
-type SimpleFailureReporter struct {
-	writers []io.Writer
-}
-
-func (r SimpleFailureReporter) new(writers ...io.Writer) SimpleFailureReporter {
-	if len(writers) == 0 {
-		writers = append(writers, os.Stdout)
-	}
-
-	r.writers = writers
-	return r
-}
-
-func (r SimpleFailureReporter) onFailure(failure LookupFailure) {
-	for _, writer := range r.writers {
-		fmt.Fprintf(writer, "[ERR] %s\n", failure.Bookmark.Href)
-	}
-}
-
-func (r SimpleFailureReporter) onSuccess(bookmark Bookmark) {
-	for _, writer := range r.writers {
-		fmt.Fprintf(writer, "[OK] %s\n", bookmark.Href)
 	}
 }
 
