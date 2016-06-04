@@ -89,7 +89,7 @@ func handleCheckAction(token string, inputFile string, outputFile string) {
 	var reporter Reporter
 	switch {
 	default:
-		reporter = SimpleFailureReporter{}.new()
+		reporter = newSimpleFailureReporter()
 	}
 
 	checkAll(bookmarks, reporter)
