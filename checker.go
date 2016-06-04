@@ -1,17 +1,18 @@
 package pinboardchecker
 
 import (
-	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
 	"sync"
 )
 
-type FailureReporter func(LookupFailure)
+type Reporter interface {
+	onFailure(failure LookupFailure)
+	onSuccess(bookmark Bookmark)
+}
 
 // we consider HTTP 429 indicative that the resource exists
 func isBadStatus(response *http.Response) bool {
@@ -52,57 +53,48 @@ func check(bookmark Bookmark) (bool, int, error) {
 	return true, headResponse.StatusCode, nil
 }
 
-func worker(id int, checkJobs <-chan Bookmark, reporter FailureReporter, workgroup *sync.WaitGroup) {
+func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *sync.WaitGroup) {
 	defer workgroup.Done()
 
 	for bookmark := range checkJobs {
 		debug("Worker %02d: Processing job for url %s", id, bookmark.Href)
 		valid, code, err := check(bookmark)
 		if !valid {
-			reporter(LookupFailure{bookmark, err})
+			reporter.onFailure(LookupFailure{bookmark, err})
 			debug("Worker %02d: ERROR: %s %d %s", id, bookmark.Href, code, err)
 		} else {
+			reporter.onSuccess(bookmark)
 			debug("Worker %02d: Success for %s\n", id, bookmark.Href)
 		}
 	}
 }
 
-func csvFailureReader(failure LookupFailure) {
-	file, err := os.Create("failedlinks.csv")
-	if err != nil {
-		log.Fatal("Cannot create file", err)
-	}
-
-	defer file.Close()
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	var errorValue string
-	if failure.Error != nil {
-		errorValue = failure.Error.Error()
-	}
-
-	record := []string{
-		failure.Bookmark.Description,
-		failure.Bookmark.Href,
-		errorValue,
-	}
-	writer.Write(record)
+type SimpleFailureReporter struct {
+	writers []io.Writer
 }
 
-func simpleFailureReporter(writers ...io.Writer) FailureReporter {
+func (r SimpleFailureReporter) new(writers ...io.Writer) SimpleFailureReporter {
 	if len(writers) == 0 {
 		writers = append(writers, os.Stdout)
 	}
-	return func(failure LookupFailure) {
-		for _, writer := range writers {
-			fmt.Fprintf(writer, "[ERR] %s\n", failure.Bookmark.Href)
-		}
+
+	r.writers = writers
+	return r
+}
+
+func (r SimpleFailureReporter) onFailure(failure LookupFailure) {
+	for _, writer := range r.writers {
+		fmt.Fprintf(writer, "[ERR] %s\n", failure.Bookmark.Href)
 	}
 }
 
-func checkAll(bookmarks []Bookmark, reporter FailureReporter) {
+func (r SimpleFailureReporter) onSuccess(bookmark Bookmark) {
+	for _, writer := range r.writers {
+		fmt.Fprintf(writer, "[OK] %s\n", bookmark.Href)
+	}
+}
+
+func checkAll(bookmarks []Bookmark, reporter Reporter) {
 	jobs := make(chan Bookmark, 10)
 	workgroup := new(sync.WaitGroup)
 

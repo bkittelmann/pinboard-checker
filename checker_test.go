@@ -26,11 +26,24 @@ func TestSimpleReporterShowingAFailure(t *testing.T) {
 	var buffer bytes.Buffer
 
 	bookmarks := []Bookmark{Bookmark{Href: "http://httpbin.org/status/404"}}
-	checkAll(bookmarks, simpleFailureReporter(&buffer))
+	checkAll(bookmarks, SimpleFailureReporter{}.new(&buffer))
 
 	lineCount := strings.Count(buffer.String(), "\n")
 
 	if lineCount != 1 {
 		t.Errorf("One failure should have been reported, %d found", lineCount)
+	}
+}
+
+func TestSimpleReporterShowingASucessInVerboseMode(t *testing.T) {
+	var buffer bytes.Buffer
+
+	bookmarks := []Bookmark{Bookmark{Href: "http://httpbin.org/status/200"}}
+	checkAll(bookmarks, SimpleFailureReporter{}.new(&buffer))
+
+	lineCount := strings.Count(buffer.String(), "\n")
+
+	if lineCount != 1 {
+		t.Errorf("One success should have been reported, %d found", lineCount)
 	}
 }

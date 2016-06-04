@@ -86,10 +86,10 @@ func handleCheckAction(token string, inputFile string, outputFile string) {
 
 	// different failure reporter depending on setting of outputFile, default to
 	// stderr simple error printing for now
-	var reporter FailureReporter
+	var reporter Reporter
 	switch {
 	default:
-		reporter = simpleFailureReporter()
+		reporter = SimpleFailureReporter{}.new()
 	}
 
 	checkAll(bookmarks, reporter)
