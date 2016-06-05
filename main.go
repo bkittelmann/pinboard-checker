@@ -75,7 +75,7 @@ func handleDeleteAction(token string, resultsFileName string) {
 	}
 }
 
-func handleCheckAction(token string, inputFile string, outputFile string, verbose bool) {
+func handleCheckAction(token string, inputFile string, outputFile string, verbose bool, noColor bool) {
 	var bookmarks []Bookmark
 	if len(inputFile) > 0 {
 		bookmarkJson, _ := ioutil.ReadFile(inputFile)
@@ -89,7 +89,7 @@ func handleCheckAction(token string, inputFile string, outputFile string, verbos
 	var reporter Reporter
 	switch {
 	default:
-		reporter = newSimpleFailureReporter(verbose)
+		reporter = newSimpleFailureReporter(verbose, !noColor)
 	}
 
 	checkAll(bookmarks, reporter)
@@ -122,6 +122,9 @@ func main() {
 	var verbose bool
 	flag.BoolVar(&verbose, "verbose", false, "Report successful link lookups")
 
+	var noColor bool
+	flag.BoolVar(&noColor, "no-color", false, "Disable colorized output for text output")
+
 	flag.Parse()
 
 	// at least one action flag needs to be set, print usage if no flags are present
@@ -143,6 +146,6 @@ func main() {
 	}
 
 	if checkAction {
-		handleCheckAction(token, inputFile, outputFile, verbose)
+		handleCheckAction(token, inputFile, outputFile, verbose, noColor)
 	}
 }
