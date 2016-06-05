@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 type SimpleFailureReporter struct {
@@ -11,9 +12,17 @@ type SimpleFailureReporter struct {
 	verbose bool
 }
 
+func (r SimpleFailureReporter) constructErrorMessage(failure LookupFailure) string {
+	if failure.Code > 0 {
+		return fmt.Sprintf("HTTP status: %d", failure.Code)
+	}
+	errorParts := strings.Split(failure.Error.Error(), ": ")
+	return fmt.Sprintf("Other: %s", errorParts[len(errorParts)-1])
+}
+
 func (r SimpleFailureReporter) onFailure(failure LookupFailure) {
 	for _, writer := range r.writers {
-		fmt.Fprintf(writer, "[ERR] %s\n", failure.Bookmark.Href)
+		fmt.Fprintf(writer, "[ERR] %s %s\n", failure.Bookmark.Href, r.constructErrorMessage(failure))
 	}
 }
 

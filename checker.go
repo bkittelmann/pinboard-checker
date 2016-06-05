@@ -8,6 +8,7 @@ import (
 
 type LookupFailure struct {
 	Bookmark Bookmark
+	Code     int
 	Error    error
 }
 
@@ -41,7 +42,6 @@ func check(bookmark Bookmark) (bool, int, error) {
 		getResponse, err := client.Get(url)
 
 		if err != nil {
-			getResponse.Body.Close()
 			return false, -1, err
 		}
 
@@ -62,7 +62,7 @@ func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *syn
 		debug("Worker %02d: Processing job for url %s", id, bookmark.Href)
 		valid, code, err := check(bookmark)
 		if !valid {
-			reporter.onFailure(LookupFailure{bookmark, err})
+			reporter.onFailure(LookupFailure{bookmark, code, err})
 			debug("Worker %02d: ERROR: %s %d %s", id, bookmark.Href, code, err)
 		} else {
 			reporter.onSuccess(bookmark)
