@@ -1,0 +1,24 @@
+[
+  {
+    "href": "https://blog.bracelab.com/achieving-perfect-ssl-labs-score-with-go",
+    "description": "Achieving a Perfect SSL Labs Score with Go",
+    "extended": "",
+    "meta": "a9138eea3d5ea2cf7dedf29c70a9b786",
+    "hash": "811a463298eeb77d7e3ddb2119d4b159",
+    "time": "2016-05-29T10:16:11Z",
+    "shared": "yes",
+    "toread": "no",
+    "tags": "golang http ssl configuration"
+  },
+  {
+    "href": "https://github.com/xenolf/lego",
+    "description": "xenolf/lego: Let's Encrypt client and ACME library written in Go",
+    "extended": "",
+    "meta": "4ad7b349071a3df9b96b5dabe4dddf04",
+    "hash": "6f02cfface77e59cbce7788d44095fcc",
+    "time": "2016-05-29T10:14:53Z",
+    "shared": "yes",
+    "toread": "no",
+    "tags": "golang encryption library tool ssl certificates"
+  }
+]

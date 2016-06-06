@@ -3,9 +3,7 @@ package main
 import (
 	"bufio"
 	"flag"
-	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -53,11 +51,12 @@ func deleteAll(token string, reader io.Reader) {
 }
 
 func handleDownloadAction(token string) {
-	bookmarks, err := downloadBookmarks(token)
+	readCloser, err := downloadBookmarks(token)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s", string(bookmarks))
+	io.Copy(os.Stdout, readCloser)
+	readCloser.Close()
 }
 
 func handleDeleteAction(token string, resultsFileName string) {
@@ -78,7 +77,7 @@ func handleDeleteAction(token string, resultsFileName string) {
 func handleCheckAction(token string, inputFile string, outputFile string, verbose bool, noColor bool) {
 	var bookmarks []Bookmark
 	if len(inputFile) > 0 {
-		bookmarkJson, _ := ioutil.ReadFile(inputFile)
+		bookmarkJson, _ := os.Open(inputFile)
 		bookmarks = parseJson(bookmarkJson)
 	} else {
 		bookmarks, _ = getAllBookmarks(token)

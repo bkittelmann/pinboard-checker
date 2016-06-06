@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,9 +14,9 @@ type Bookmark struct {
 	Description string
 }
 
-func parseJson(bookmarkJson []byte) []Bookmark {
+func parseJson(input io.Reader) []Bookmark {
 	var bookmarks []Bookmark
-	json.Unmarshal(bookmarkJson, &bookmarks)
+	json.NewDecoder(input).Decode(&bookmarks)
 	return bookmarks
 }
 
@@ -38,21 +39,21 @@ func buildDeleteEndpoint(token string, rawUrl string) string {
 	return endpoint.String()
 }
 
-func downloadBookmarks(token string) ([]byte, error) {
+func downloadBookmarks(token string) (io.ReadCloser, error) {
 	response, err := http.Get(buildDownloadEndpoint(token))
-	defer response.Body.Close()
 
 	if err != nil {
 		debug("Error %s", err)
 		return nil, err
 	}
 
-	return ioutil.ReadAll(response.Body)
+	return response.Body, err
 }
 
 func getAllBookmarks(token string) ([]Bookmark, error) {
-	bookmarkJson, err := downloadBookmarks(token)
-	return parseJson(bookmarkJson), err
+	readCloser, err := downloadBookmarks(token)
+	defer readCloser.Close()
+	return parseJson(readCloser), err
 }
 
 func deleteBookmark(token string, bookmark Bookmark) {
