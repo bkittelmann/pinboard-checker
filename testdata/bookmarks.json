@@ -17,8 +17,8 @@
     "meta": "4ad7b349071a3df9b96b5dabe4dddf04",
     "hash": "6f02cfface77e59cbce7788d44095fcc",
     "time": "2016-05-29T10:14:53Z",
-    "shared": "yes",
-    "toread": "no",
+    "shared": "no",
+    "toread": "yes",
     "tags": "golang encryption library tool ssl certificates"
   }
 ]

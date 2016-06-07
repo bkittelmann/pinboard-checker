@@ -7,11 +7,43 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
+	"time"
 )
+
+type PinboardBoolean bool
+
+func (p *PinboardBoolean) UnmarshalJSON(data []byte) error {
+	var value string
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+
+	*p = (value == "yes")
+	return nil
+}
+
+type PinboardTags []string
+
+func (p *PinboardTags) UnmarshalJSON(data []byte) error {
+	var value string
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*p = strings.Split(value, " ")
+	return nil
+}
 
 type Bookmark struct {
 	Href        string
 	Description string
+	Extended    string
+	Meta        string
+	Hash        string
+	Time        time.Time
+	Shared      PinboardBoolean
+	ToRead      PinboardBoolean
+	Tags        PinboardTags
 }
 
 func parseJson(input io.Reader) []Bookmark {
