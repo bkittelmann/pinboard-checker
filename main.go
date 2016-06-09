@@ -78,7 +78,7 @@ func handleCheckAction(token string, inputFile string, outputFile string, verbos
 	var bookmarks []Bookmark
 	if len(inputFile) > 0 {
 		bookmarkJson, _ := os.Open(inputFile)
-		bookmarks = parseJson(bookmarkJson)
+		bookmarks = parseJSON(bookmarkJson)
 	} else {
 		bookmarks, _ = getAllBookmarks(token)
 	}

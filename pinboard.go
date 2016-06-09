@@ -23,6 +23,14 @@ func (p *PinboardBoolean) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (p *PinboardBoolean) MarshalJSON() ([]byte, error) {
+	if *p {
+		return json.Marshal("yes")
+	} else {
+		return json.Marshal("no")
+	}
+}
+
 type PinboardTags []string
 
 func (p *PinboardTags) UnmarshalJSON(data []byte) error {
@@ -34,22 +42,32 @@ func (p *PinboardTags) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type Bookmark struct {
-	Href        string
-	Description string
-	Extended    string
-	Meta        string
-	Hash        string
-	Time        time.Time
-	Shared      PinboardBoolean
-	ToRead      PinboardBoolean
-	Tags        PinboardTags
+func (p *PinboardTags) MarshalJSON() ([]byte, error) {
+	out := strings.Join(*p, " ")
+	result, err := json.Marshal(out)
+	return result, err
 }
 
-func parseJson(input io.Reader) []Bookmark {
+type Bookmark struct {
+	Href        string          `json:"href"`
+	Description string          `json:"description,omitempty"`
+	Extended    string          `json:"extended,omitempty"`
+	Meta        string          `json:"meta,omitempty"`
+	Hash        string          `json:"hash,omitempty"`
+	Time        time.Time       `json:"time,omitempty"`
+	Shared      PinboardBoolean `json:"shared"`
+	ToRead      PinboardBoolean `json:"toread"`
+	Tags        PinboardTags    `json:"tags"`
+}
+
+func parseJSON(input io.Reader) []Bookmark {
 	var bookmarks []Bookmark
 	json.NewDecoder(input).Decode(&bookmarks)
 	return bookmarks
+}
+
+func writeJSON(bookmarks []Bookmark, output io.Writer) {
+	json.NewEncoder(output).Encode(bookmarks)
 }
 
 func buildDownloadEndpoint(token string) string {
@@ -85,7 +103,7 @@ func downloadBookmarks(token string) (io.ReadCloser, error) {
 func getAllBookmarks(token string) ([]Bookmark, error) {
 	readCloser, err := downloadBookmarks(token)
 	defer readCloser.Close()
-	return parseJson(readCloser), err
+	return parseJSON(readCloser), err
 }
 
 func deleteBookmark(token string, bookmark Bookmark) {
