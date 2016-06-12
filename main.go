@@ -7,15 +7,10 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"github.com/bkittelmann/pinboard-checker/cmd"
+	"github.com/bkittelmann/pinboard-checker/pinboard"
 )
-
-func debug(format string, args ...interface{}) {
-	if debugEnabled {
-		log.Printf(format+"\n", args...)
-	}
-}
-
-var debugEnabled bool
 
 func readUrlsFromFile(source string) []string {
 	urls := make([]string, 0)
@@ -42,7 +37,7 @@ func deleteAll(token string, reader io.Reader) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		url := strings.TrimSpace(scanner.Text())
-		deleteBookmark(token, Bookmark{Href: url, Description: ""})
+		pinboard.DeleteBookmark(token, pinboard.Bookmark{Href: url, Description: ""})
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -51,7 +46,7 @@ func deleteAll(token string, reader io.Reader) {
 }
 
 func handleDownloadAction(token string) {
-	readCloser, err := downloadBookmarks(token)
+	readCloser, err := pinboard.DownloadBookmarks(token)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,10 +56,8 @@ func handleDownloadAction(token string) {
 
 func handleDeleteAction(token string, resultsFileName string) {
 	if resultsFileName == "-" {
-		debug("Using stdin")
 		deleteAll(token, os.Stdin)
 	} else {
-		debug("Using bookmarks from %s\n", resultsFileName)
 		file, err := os.Open(resultsFileName)
 		if err != nil {
 			log.Fatal("Could not read file with bookmarks to delete")
@@ -75,23 +68,23 @@ func handleDeleteAction(token string, resultsFileName string) {
 }
 
 func handleCheckAction(token string, inputFile string, outputFile string, verbose bool, noColor bool) {
-	var bookmarks []Bookmark
+	var bookmarks []pinboard.Bookmark
 	if len(inputFile) > 0 {
 		bookmarkJson, _ := os.Open(inputFile)
-		bookmarks = parseJSON(bookmarkJson)
+		bookmarks = pinboard.ParseJSON(bookmarkJson)
 	} else {
-		bookmarks, _ = getAllBookmarks(token)
+		bookmarks, _ = pinboard.GetAllBookmarks(token)
 	}
 
 	// different failure reporter depending on setting of outputFile, default to
 	// stderr simple error printing for now
-	var reporter Reporter
+	var reporter pinboard.Reporter
 	switch {
 	default:
-		reporter = newSimpleFailureReporter(verbose, !noColor)
+		reporter = pinboard.NewSimpleFailureReporter(verbose, !noColor)
 	}
 
-	checkAll(bookmarks, reporter)
+	pinboard.CheckAll(bookmarks, reporter)
 }
 
 func main() {
@@ -104,7 +97,7 @@ func main() {
 	var token string
 	flag.StringVar(&token, "token", "", "Mandatory authentication token")
 
-	flag.BoolVar(&debugEnabled, "debug", false, "Enable debug logs, will be printed on stderr")
+	flag.BoolVar(&pinboard.DebugEnabled, "debug", false, "Enable debug logs, will be printed on stderr")
 
 	var outputFile string
 	flag.StringVar(&outputFile, "outputFile", "-", "File to store results of check operation in, defaults to stdout")

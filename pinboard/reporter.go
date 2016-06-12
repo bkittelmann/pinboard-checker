@@ -1,4 +1,4 @@
-package main
+package pinboard
 
 import (
 	"fmt"
@@ -53,7 +53,7 @@ func (r SimpleFailureReporter) onSuccess(bookmark Bookmark) {
 	}
 }
 
-func newSimpleFailureReporter(verbose bool, colorize bool, writers ...io.Writer) SimpleFailureReporter {
+func NewSimpleFailureReporter(verbose bool, colorize bool, writers ...io.Writer) SimpleFailureReporter {
 	if len(writers) == 0 {
 		writers = append(writers, os.Stdout)
 	}

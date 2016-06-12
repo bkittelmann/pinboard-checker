@@ -1,4 +1,4 @@
-package main
+package pinboard
 
 import (
 	"bytes"

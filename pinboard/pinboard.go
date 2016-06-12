@@ -1,4 +1,4 @@
-package main
+package pinboard
 
 import (
 	"encoding/json"
@@ -10,6 +10,14 @@ import (
 	"strings"
 	"time"
 )
+
+func debug(format string, args ...interface{}) {
+	if DebugEnabled {
+		log.Printf(format+"\n", args...)
+	}
+}
+
+var DebugEnabled bool
 
 type PinboardBoolean bool
 
@@ -60,7 +68,7 @@ type Bookmark struct {
 	Tags        PinboardTags    `json:"tags"`
 }
 
-func parseJSON(input io.Reader) []Bookmark {
+func ParseJSON(input io.Reader) []Bookmark {
 	var bookmarks []Bookmark
 	json.NewDecoder(input).Decode(&bookmarks)
 	return bookmarks
@@ -89,7 +97,7 @@ func buildDeleteEndpoint(token string, rawUrl string) string {
 	return endpoint.String()
 }
 
-func downloadBookmarks(token string) (io.ReadCloser, error) {
+func DownloadBookmarks(token string) (io.ReadCloser, error) {
 	response, err := http.Get(buildDownloadEndpoint(token))
 
 	if err != nil {
@@ -100,13 +108,13 @@ func downloadBookmarks(token string) (io.ReadCloser, error) {
 	return response.Body, err
 }
 
-func getAllBookmarks(token string) ([]Bookmark, error) {
-	readCloser, err := downloadBookmarks(token)
+func GetAllBookmarks(token string) ([]Bookmark, error) {
+	readCloser, err := DownloadBookmarks(token)
 	defer readCloser.Close()
-	return parseJSON(readCloser), err
+	return ParseJSON(readCloser), err
 }
 
-func deleteBookmark(token string, bookmark Bookmark) {
+func DeleteBookmark(token string, bookmark Bookmark) {
 	endpoint := buildDeleteEndpoint(token, bookmark.Href)
 
 	debug("Deleting %s\n", bookmark.Href)

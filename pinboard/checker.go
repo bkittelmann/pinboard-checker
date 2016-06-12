@@ -1,4 +1,4 @@
-package main
+package pinboard
 
 import (
 	"net/http"
@@ -71,7 +71,7 @@ func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *syn
 	}
 }
 
-func checkAll(bookmarks []Bookmark, reporter Reporter) {
+func CheckAll(bookmarks []Bookmark, reporter Reporter) {
 	jobs := make(chan Bookmark, 10)
 	workgroup := new(sync.WaitGroup)
 
