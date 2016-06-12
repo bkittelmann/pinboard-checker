@@ -30,7 +30,7 @@ func TestSimpleReporterShowingAFailure(t *testing.T) {
 		Bookmark{Href: "http://httpbin.org/status/404"},
 		Bookmark{Href: "http://httpbin.org/status/200"},
 	}
-	checkAll(bookmarks, newSimpleFailureReporter(verbose, true, &buffer))
+	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer))
 
 	lineCount := strings.Count(buffer.String(), "\n")
 
@@ -46,7 +46,7 @@ func TestSimpleReporterShowingASucessInVerboseMode(t *testing.T) {
 	bookmarks := []Bookmark{
 		Bookmark{Href: "http://httpbin.org/status/200"},
 	}
-	checkAll(bookmarks, newSimpleFailureReporter(verbose, true, &buffer))
+	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer))
 
 	lineCount := strings.Count(buffer.String(), "\n")
 

@@ -12,7 +12,7 @@ func TestParseJSON(t *testing.T) {
 	file, _ := os.Open("testdata/bookmarks.json")
 	defer file.Close()
 
-	bookmarks := parseJSON(file)
+	bookmarks := ParseJSON(file)
 
 	if len(bookmarks) != 2 {
 		t.Errorf("Expected 2 bookmark objects to be parsed from JSON, got %d", len(bookmarks))
@@ -28,7 +28,7 @@ func TestWriteJSON(t *testing.T) {
 	file, _ := os.Open("testdata/bookmarks.json")
 	defer file.Close()
 
-	bookmarks := parseJSON(file)
+	bookmarks := ParseJSON(file)
 
 	var b bytes.Buffer
 	buf := bufio.NewWriter(&b)
@@ -36,7 +36,7 @@ func TestWriteJSON(t *testing.T) {
 	writeJSON(bookmarks, buf)
 	buf.Flush()
 
-	deserialized := parseJSON(bufio.NewReader(&b))
+	deserialized := ParseJSON(bufio.NewReader(&b))
 
 	if !reflect.DeepEqual(bookmarks, deserialized) {
 		t.Errorf("Deserialization did not work")
