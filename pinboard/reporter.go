@@ -53,6 +53,10 @@ func (r SimpleFailureReporter) onSuccess(bookmark Bookmark) {
 	}
 }
 
+func (r SimpleFailureReporter) onEnd() {
+	// does nothing
+}
+
 func NewSimpleFailureReporter(verbose bool, colorize bool, writers ...io.Writer) SimpleFailureReporter {
 	if len(writers) == 0 {
 		writers = append(writers, os.Stdout)
@@ -62,5 +66,43 @@ func NewSimpleFailureReporter(verbose bool, colorize bool, writers ...io.Writer)
 		writers:        writers,
 		verbose:        verbose,
 		colorizePrefix: colorize,
+	}
+}
+
+type JSONReporter struct {
+	writers   []io.Writer
+	verbose   bool
+	failures  []LookupFailure
+	successes []Bookmark
+}
+
+func (r *JSONReporter) onFailure(failure LookupFailure) {
+	r.failures = append(r.failures, failure)
+}
+
+func (r *JSONReporter) onSuccess(bookmark Bookmark) {
+	r.successes = append(r.successes, bookmark)
+}
+
+func (r *JSONReporter) onEnd() {
+	var failed []Bookmark
+
+	for _, failure := range r.failures {
+		failed = append(failed, failure.Bookmark)
+	}
+
+	if r.verbose {
+		failed = append(failed, r.successes...)
+	}
+
+	for _, writer := range r.writers {
+		writeJSON(failed, writer)
+	}
+}
+
+func NewJSONReporter(verbose bool, writers ...io.Writer) *JSONReporter {
+	return &JSONReporter{
+		writers: writers,
+		verbose: verbose,
 	}
 }

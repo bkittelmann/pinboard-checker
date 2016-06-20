@@ -15,6 +15,7 @@ type LookupFailure struct {
 type Reporter interface {
 	onFailure(failure LookupFailure)
 	onSuccess(bookmark Bookmark)
+	onEnd()
 }
 
 // we consider HTTP 429 indicative that the resource exists
@@ -88,4 +89,5 @@ func CheckAll(bookmarks []Bookmark, reporter Reporter) {
 
 	close(jobs)
 	workgroup.Wait()
+	reporter.onEnd()
 }
