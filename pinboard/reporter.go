@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 )
@@ -86,9 +87,22 @@ func (r *JSONReporter) onSuccess(bookmark Bookmark) {
 
 func (r *JSONReporter) onEnd() {
 	var failed []Bookmark
+	checkedAt := time.Now()
 
 	for _, failure := range r.failures {
-		failed = append(failed, failure.Bookmark)
+		withInfo := failure.Bookmark
+
+		if failure.Code > 0 {
+			withInfo.FailureInfo.HttpCode = failure.Code
+		}
+
+		if failure.Error != nil {
+			withInfo.FailureInfo.ErrorMessage = failure.Error.Error()
+		}
+
+		withInfo.FailureInfo.CheckedAt = &checkedAt
+
+		failed = append(failed, withInfo)
 	}
 
 	if r.verbose {
@@ -101,6 +115,9 @@ func (r *JSONReporter) onEnd() {
 }
 
 func NewJSONReporter(verbose bool, writers ...io.Writer) *JSONReporter {
+	if len(writers) == 0 {
+		writers = append(writers, os.Stdout)
+	}
 	return &JSONReporter{
 		writers: writers,
 		verbose: verbose,

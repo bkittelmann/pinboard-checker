@@ -56,6 +56,13 @@ func (p *PinboardTags) MarshalJSON() ([]byte, error) {
 	return result, err
 }
 
+type FailureInfo struct {
+	HttpCode     int    `json:"httpCode,omitempty"`
+	ErrorMessage string `json:"message,omitempty"`
+	// note: needs to be a pointer type so that 'omitempty' does work
+	CheckedAt *time.Time `json:"checkedAt,omitempty"`
+}
+
 type Bookmark struct {
 	Href        string          `json:"href"`
 	Description string          `json:"description,omitempty"`
@@ -66,6 +73,7 @@ type Bookmark struct {
 	Shared      PinboardBoolean `json:"shared"`
 	ToRead      PinboardBoolean `json:"toread"`
 	Tags        PinboardTags    `json:"tags"`
+	FailureInfo FailureInfo     `json:"failure,omitempty"`
 }
 
 func ParseJSON(input io.Reader) []Bookmark {

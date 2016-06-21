@@ -55,7 +55,7 @@ func TestSimpleReporterShowingASucessInVerboseMode(t *testing.T) {
 	}
 }
 
-func TestJSONReporterShowingAFailures(t *testing.T) {
+func TestJSONReporterShowingAFailure(t *testing.T) {
 	verbose := false
 	var buffer bytes.Buffer
 
@@ -76,6 +76,11 @@ func TestJSONReporterShowingAFailures(t *testing.T) {
 	failedBookmarksCount := len(failedBookmarks)
 	if failedBookmarksCount != 1 {
 		t.Errorf("Expected one failed bookmark to be present in generated JSON, %d found", failedBookmarksCount)
+	}
+
+	failedBookmark := failedBookmarks[0]
+	if failedBookmark.FailureInfo.HttpCode != 404 {
+		t.Errorf("Wrong code set on failure info JSON, expected 404, got %d", failedBookmark.FailureInfo.HttpCode)
 	}
 }
 
