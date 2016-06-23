@@ -51,8 +51,8 @@ var checkCmd = &cobra.Command{
 
 		var bookmarks []pinboard.Bookmark
 		if len(inputFile) > 0 {
-			bookmarkJson, _ := os.Open(inputFile)
-			bookmarks = pinboard.ParseJSON(bookmarkJson)
+			file, _ := os.Open(inputFile)
+			bookmarks = pinboard.GetBookmarksFromFile(file, inputFormat)
 		} else {
 			bookmarks, _ = pinboard.GetAllBookmarks(token)
 		}

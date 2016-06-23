@@ -1,6 +1,7 @@
 package pinboard
 
 import (
+	"bufio"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -82,6 +83,22 @@ func ParseJSON(input io.Reader) []Bookmark {
 	return bookmarks
 }
 
+func ParseText(input io.Reader) []Bookmark {
+	var bookmarks []Bookmark
+	scanner := bufio.NewScanner(input)
+	for scanner.Scan() {
+		url := strings.TrimSpace(scanner.Text())
+		if len(url) > 0 {
+			bookmarks = append(bookmarks, Bookmark{Href: url})
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return bookmarks
+}
+
 func writeJSON(bookmarks []Bookmark, output io.Writer) {
 	json.NewEncoder(output).Encode(bookmarks)
 }
@@ -141,4 +158,15 @@ func DeleteBookmark(token string, bookmark Bookmark) {
 	}
 
 	debug("%s", body)
+}
+
+func GetBookmarksFromFile(reader io.Reader, format string) []Bookmark {
+	var bookmarks []Bookmark
+	switch format {
+	case "txt":
+		bookmarks = ParseText(reader)
+	case "json":
+		bookmarks = ParseJSON(reader)
+	}
+	return bookmarks
 }
