@@ -10,6 +10,7 @@ import (
 
 var token string
 var inputFile string
+var inputFormat string
 var outputFile string
 var outputFormat string
 var verbose bool
@@ -18,8 +19,9 @@ var noColor bool
 func init() {
 	checkCmd.Flags().StringVarP(&token, "token", "t", "", "The pinboard API token")
 	checkCmd.Flags().StringVarP(&inputFile, "inputFile", "i", "", "File containing links to check")
+	checkCmd.Flags().StringVar(&inputFormat, "inputFormat", "json", "Format of file with links. Can be either 'json' (default) or 'txt'")
 	checkCmd.Flags().StringVarP(&outputFile, "outputFile", "o", "-", "Where the report should be written to")
-	checkCmd.Flags().StringVarP(&outputFormat, "outputFormat", "f", "txt", "Allowed values are 'txt' (default) or 'json'")
+	checkCmd.Flags().StringVar(&outputFormat, "outputFormat", "txt", "Allowed values are 'txt' (default) or 'json'")
 	checkCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose logging, will report successful link lookups")
 	checkCmd.Flags().BoolVar(&noColor, "noColor", false, "Do not use colorized status output")
 
