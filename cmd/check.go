@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io"
 	"log"
 	"os"
 
@@ -18,7 +19,7 @@ var noColor bool
 
 func init() {
 	checkCmd.Flags().StringVarP(&token, "token", "t", "", "The pinboard API token")
-	checkCmd.Flags().StringVarP(&inputFile, "inputFile", "i", "", "File containing links to check")
+	checkCmd.Flags().StringVarP(&inputFile, "inputFile", "i", "", "File containing links to check. To read stdin use '-'.")
 	checkCmd.Flags().StringVar(&inputFormat, "inputFormat", "json", "Format of file with links. Can be either 'json' (default) or 'txt'")
 	checkCmd.Flags().StringVarP(&outputFile, "outputFile", "o", "-", "Where the report should be written to")
 	checkCmd.Flags().StringVar(&outputFormat, "outputFormat", "txt", "Allowed values are 'txt' (default) or 'json'")
@@ -51,7 +52,12 @@ var checkCmd = &cobra.Command{
 
 		var bookmarks []pinboard.Bookmark
 		if len(inputFile) > 0 {
-			file, _ := os.Open(inputFile)
+			var file io.Reader
+			if inputFile == "-" {
+				file = os.Stdin
+			} else {
+				file, _ = os.Open(inputFile)
+			}
 			bookmarks = pinboard.GetBookmarksFromFile(file, inputFormat)
 		} else {
 			bookmarks, _ = pinboard.GetAllBookmarks(token)
