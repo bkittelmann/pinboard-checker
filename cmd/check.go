@@ -11,33 +11,31 @@ import (
 
 var token string
 var inputFile string
-var inputFormat string
+var inputFormatRaw string
 var outputFile string
-var outputFormat string
+var outputFormatRaw string
 var verbose bool
 var noColor bool
 
 func init() {
 	checkCmd.Flags().StringVarP(&token, "token", "t", "", "The pinboard API token")
 	checkCmd.Flags().StringVarP(&inputFile, "inputFile", "i", "", "File containing links to check. To read stdin use '-'.")
-	checkCmd.Flags().StringVar(&inputFormat, "inputFormat", "json", "Format of file with links. Can be either 'json' (default) or 'txt'")
+	checkCmd.Flags().StringVar(&inputFormatRaw, "inputFormat", "json", "Format of file with links. Can be either 'json' (default) or 'txt'")
 	checkCmd.Flags().StringVarP(&outputFile, "outputFile", "o", "-", "Where the report should be written to")
-	checkCmd.Flags().StringVar(&outputFormat, "outputFormat", "txt", "Allowed values are 'txt' (default) or 'json'")
+	checkCmd.Flags().StringVar(&outputFormatRaw, "outputFormat", "txt", "Allowed values are 'txt' (default) or 'json'")
 	checkCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose logging, will report successful link lookups")
 	checkCmd.Flags().BoolVar(&noColor, "noColor", false, "Do not use colorized status output")
 
 	RootCmd.AddCommand(checkCmd)
 }
 
-func makeReporter(format string) pinboard.Reporter {
+func makeReporter(format pinboard.Format) pinboard.Reporter {
 	var reporter pinboard.Reporter
 	switch format {
-	case "json":
+	case pinboard.JSON:
 		reporter = pinboard.NewJSONReporter(verbose)
-	case "txt":
+	case pinboard.TXT:
 		reporter = pinboard.NewSimpleFailureReporter(verbose, !noColor)
-	default:
-		log.Fatalf("'%s' is not a valid value for 'outputFormat'", format)
 	}
 	return reporter
 }
@@ -48,6 +46,17 @@ var checkCmd = &cobra.Command{
 	Long:  "...",
 
 	Run: func(cmd *cobra.Command, args []string) {
+		// validate that format flags contain valid values
+		inputFormat, inputErr := pinboard.FormatFromString(inputFormatRaw)
+		if inputErr != nil {
+			log.Fatalf("Invalid input format: %s", inputFormatRaw)
+		}
+
+		outputFormat, outputErr := pinboard.FormatFromString(outputFormatRaw)
+		if outputErr != nil {
+			log.Fatalf("Invalid output format: %s", outputFormatRaw)
+		}
+
 		reporter := makeReporter(outputFormat)
 
 		var bookmarks []pinboard.Bookmark
@@ -60,6 +69,9 @@ var checkCmd = &cobra.Command{
 			}
 			bookmarks = pinboard.GetBookmarksFromFile(file, inputFormat)
 		} else {
+			if len(token) == 0 {
+				log.Fatal("Token parameter not set")
+			}
 			bookmarks, _ = pinboard.GetAllBookmarks(token)
 		}
 

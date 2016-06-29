@@ -3,6 +3,8 @@ package pinboard
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -11,6 +13,33 @@ import (
 	"strings"
 	"time"
 )
+
+type Format int
+
+const (
+	JSON Format = iota + 1
+	TXT
+)
+
+func (f Format) String() string {
+	if f == JSON {
+		return "json"
+	}
+	if f == TXT {
+		return "txt"
+	}
+	return ""
+}
+
+func FormatFromString(value string) (Format, error) {
+	switch value {
+	case "json":
+		return JSON, nil
+	case "txt":
+		return TXT, nil
+	}
+	return 0, errors.New(fmt.Sprintf("%s is not a valid format value", value))
+}
 
 func debug(format string, args ...interface{}) {
 	if DebugEnabled {
@@ -160,12 +189,12 @@ func DeleteBookmark(token string, bookmark Bookmark) {
 	debug("%s", body)
 }
 
-func GetBookmarksFromFile(reader io.Reader, format string) []Bookmark {
+func GetBookmarksFromFile(reader io.Reader, format Format) []Bookmark {
 	var bookmarks []Bookmark
 	switch format {
-	case "txt":
+	case TXT:
 		bookmarks = ParseText(reader)
-	case "json":
+	case JSON:
 		bookmarks = ParseJSON(reader)
 	}
 	return bookmarks
