@@ -72,7 +72,8 @@ var checkCmd = &cobra.Command{
 			if len(token) == 0 {
 				log.Fatal("Token parameter not set")
 			}
-			bookmarks, _ = pinboard.GetAllBookmarks(token)
+			client := pinboard.NewClient(token, pinboard.DefaultEndpoint)
+			bookmarks, _ = client.GetAllBookmarks()
 		}
 
 		pinboard.CheckAll(bookmarks, reporter)

@@ -132,27 +132,37 @@ func writeJSON(bookmarks []Bookmark, output io.Writer) {
 	json.NewEncoder(output).Encode(bookmarks)
 }
 
-func buildDownloadEndpoint(token string) string {
-	endpoint, _ := url.Parse("https://api.pinboard.in/v1/posts/all")
-	query := endpoint.Query()
-	query.Add("auth_token", token)
-	query.Add("format", "json")
-	endpoint.RawQuery = query.Encode()
+var DefaultEndpoint *url.URL
+
+func init() {
+	url, err := url.Parse("https://api.pinboard.in")
+	if err == nil {
+		DefaultEndpoint = url
+	}
+}
+
+type Client struct {
+	Token    string
+	Endpoint *url.URL
+}
+
+func (client *Client) buildDownloadEndpoint() string {
+	downloadPath, _ := url.Parse("/v1/posts/all?format=json&auth_token=" + client.Token)
+	endpoint := client.Endpoint.ResolveReference(downloadPath)
 	return endpoint.String()
 }
 
-func buildDeleteEndpoint(token string, rawUrl string) string {
-	endpoint, _ := url.Parse("https://api.pinboard.in/v1/posts/delete")
+func (client *Client) buildDeleteEndpoint(rawUrl string) string {
+	downloadPath, _ := url.Parse("/v1/posts/delete?format=json&auth_token=" + client.Token)
+	endpoint := client.Endpoint.ResolveReference(downloadPath)
 	query := endpoint.Query()
-	query.Add("auth_token", token)
-	query.Add("format", "json")
 	query.Add("url", rawUrl)
 	endpoint.RawQuery = query.Encode()
 	return endpoint.String()
 }
 
-func DownloadBookmarks(token string) (io.ReadCloser, error) {
-	response, err := http.Get(buildDownloadEndpoint(token))
+func (client Client) DownloadBookmarks() (io.ReadCloser, error) {
+	response, err := http.Get(client.buildDownloadEndpoint())
 
 	if err != nil {
 		debug("Error %s", err)
@@ -162,14 +172,14 @@ func DownloadBookmarks(token string) (io.ReadCloser, error) {
 	return response.Body, err
 }
 
-func GetAllBookmarks(token string) ([]Bookmark, error) {
-	readCloser, err := DownloadBookmarks(token)
+func (client Client) GetAllBookmarks() ([]Bookmark, error) {
+	readCloser, err := client.DownloadBookmarks()
 	defer readCloser.Close()
 	return ParseJSON(readCloser), err
 }
 
-func DeleteBookmark(token string, bookmark Bookmark) {
-	endpoint := buildDeleteEndpoint(token, bookmark.Href)
+func (client *Client) DeleteBookmark(bookmark Bookmark) {
+	endpoint := client.buildDeleteEndpoint(bookmark.Href)
 
 	debug("Deleting %s\n", bookmark.Href)
 
@@ -187,6 +197,10 @@ func DeleteBookmark(token string, bookmark Bookmark) {
 	}
 
 	debug("%s", body)
+}
+
+func NewClient(token string, endpoint *url.URL) *Client {
+	return &Client{Token: token, Endpoint: endpoint}
 }
 
 func GetBookmarksFromFile(reader io.Reader, format Format) []Bookmark {

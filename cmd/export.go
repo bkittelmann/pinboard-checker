@@ -11,6 +11,7 @@ import (
 
 func init() {
 	exportCmd.Flags().StringP("token", "t", "", "The pinboard API token")
+	// add new API endpoint flag here, default it to default endpoint
 
 	RootCmd.AddCommand(exportCmd)
 }
@@ -22,7 +23,8 @@ var exportCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		token, _ := cmd.Flags().GetString("token")
-		readCloser, err := pinboard.DownloadBookmarks(token)
+		client := pinboard.NewClient(token, pinboard.DefaultEndpoint)
+		readCloser, err := client.DownloadBookmarks()
 		if err != nil {
 			log.Fatal(err)
 		}

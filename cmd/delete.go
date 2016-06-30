@@ -41,10 +41,11 @@ var deleteCmd = &cobra.Command{
 }
 
 func deleteAll(token string, reader io.Reader) {
+	client := pinboard.NewClient(token, pinboard.DefaultEndpoint)
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		url := strings.TrimSpace(scanner.Text())
-		pinboard.DeleteBookmark(token, pinboard.Bookmark{Href: url, Description: ""})
+		client.DeleteBookmark(pinboard.Bookmark{Href: url, Description: ""})
 	}
 
 	if err := scanner.Err(); err != nil {
