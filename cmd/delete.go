@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 
 func init() {
 	deleteCmd.Flags().StringP("token", "t", "", "The pinboard API token")
+	deleteCmd.Flags().String("endpoint", pinboard.DefaultEndpoint.String(), "URL of pinboard API endpoint")
 	deleteCmd.Flags().StringP("inputFile", "i", "-", "File containing links to delete")
 
 	RootCmd.AddCommand(deleteCmd)
@@ -25,23 +27,25 @@ var deleteCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		token, _ := cmd.Flags().GetString("token")
+		endpoint, _ := cmd.Flags().GetString("endpoint")
+		endpointUrl, _ := url.Parse(endpoint)
 		inputFile, _ := cmd.Flags().GetString("inputFile")
 
 		if inputFile == "-" {
-			deleteAll(token, os.Stdin)
+			deleteAll(token, endpointUrl, os.Stdin)
 		} else {
 			file, err := os.Open(inputFile)
 			if err != nil {
 				log.Fatal("Could not read file with bookmarks to delete")
 			} else {
-				deleteAll(token, file)
+				deleteAll(token, endpointUrl, file)
 			}
 		}
 	},
 }
 
-func deleteAll(token string, reader io.Reader) {
-	client := pinboard.NewClient(token, pinboard.DefaultEndpoint)
+func deleteAll(token string, endpoint *url.URL, reader io.Reader) {
+	client := pinboard.NewClient(token, endpoint)
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		url := strings.TrimSpace(scanner.Text())

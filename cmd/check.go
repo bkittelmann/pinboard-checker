@@ -3,6 +3,7 @@ package cmd
 import (
 	"io"
 	"log"
+	"net/url"
 	"os"
 
 	"github.com/bkittelmann/pinboard-checker/pinboard"
@@ -19,6 +20,7 @@ var noColor bool
 
 func init() {
 	checkCmd.Flags().StringVarP(&token, "token", "t", "", "The pinboard API token")
+	checkCmd.Flags().String("endpoint", pinboard.DefaultEndpoint.String(), "URL of pinboard API endpoint")
 	checkCmd.Flags().StringVarP(&inputFile, "inputFile", "i", "", "File containing links to check. To read stdin use '-'.")
 	checkCmd.Flags().StringVar(&inputFormatRaw, "inputFormat", "json", "Format of file with links. Can be either 'json' (default) or 'txt'")
 	checkCmd.Flags().StringVarP(&outputFile, "outputFile", "o", "-", "Where the report should be written to")
@@ -72,7 +74,10 @@ var checkCmd = &cobra.Command{
 			if len(token) == 0 {
 				log.Fatal("Token parameter not set")
 			}
-			client := pinboard.NewClient(token, pinboard.DefaultEndpoint)
+			endpoint, _ := cmd.Flags().GetString("endpoint")
+			endpointUrl, _ := url.Parse(endpoint)
+
+			client := pinboard.NewClient(token, endpointUrl)
 			bookmarks, _ = client.GetAllBookmarks()
 		}
 

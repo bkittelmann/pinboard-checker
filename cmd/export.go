@@ -3,6 +3,7 @@ package cmd
 import (
 	"io"
 	"log"
+	"net/url"
 	"os"
 
 	"github.com/bkittelmann/pinboard-checker/pinboard"
@@ -11,7 +12,7 @@ import (
 
 func init() {
 	exportCmd.Flags().StringP("token", "t", "", "The pinboard API token")
-	// add new API endpoint flag here, default it to default endpoint
+	exportCmd.Flags().String("endpoint", pinboard.DefaultEndpoint.String(), "URL of pinboard API endpoint")
 
 	RootCmd.AddCommand(exportCmd)
 }
@@ -23,7 +24,11 @@ var exportCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		token, _ := cmd.Flags().GetString("token")
-		client := pinboard.NewClient(token, pinboard.DefaultEndpoint)
+		endpoint, _ := cmd.Flags().GetString("endpoint")
+		endpointUrl, _ := url.Parse(endpoint)
+
+		client := pinboard.NewClient(token, endpointUrl)
+
 		readCloser, err := client.DownloadBookmarks()
 		if err != nil {
 			log.Fatal(err)

@@ -147,13 +147,13 @@ type Client struct {
 }
 
 func (client *Client) buildDownloadEndpoint() string {
-	downloadPath, _ := url.Parse("/v1/posts/all?format=json&auth_token=" + client.Token)
+	downloadPath, _ := url.Parse("v1/posts/all?format=json&auth_token=" + client.Token)
 	endpoint := client.Endpoint.ResolveReference(downloadPath)
 	return endpoint.String()
 }
 
 func (client *Client) buildDeleteEndpoint(rawUrl string) string {
-	downloadPath, _ := url.Parse("/v1/posts/delete?format=json&auth_token=" + client.Token)
+	downloadPath, _ := url.Parse("v1/posts/delete?format=json&auth_token=" + client.Token)
 	endpoint := client.Endpoint.ResolveReference(downloadPath)
 	query := endpoint.Query()
 	query.Add("url", rawUrl)
@@ -161,8 +161,11 @@ func (client *Client) buildDeleteEndpoint(rawUrl string) string {
 	return endpoint.String()
 }
 
-func (client Client) DownloadBookmarks() (io.ReadCloser, error) {
-	response, err := http.Get(client.buildDownloadEndpoint())
+func (client *Client) DownloadBookmarks() (io.ReadCloser, error) {
+	req, err := http.NewRequest("GET", client.buildDownloadEndpoint(), nil)
+
+	httpClient := &http.Client{}
+	response, err := httpClient.Do(req)
 
 	if err != nil {
 		debug("Error %s", err)
@@ -172,7 +175,7 @@ func (client Client) DownloadBookmarks() (io.ReadCloser, error) {
 	return response.Body, err
 }
 
-func (client Client) GetAllBookmarks() ([]Bookmark, error) {
+func (client *Client) GetAllBookmarks() ([]Bookmark, error) {
 	readCloser, err := client.DownloadBookmarks()
 	defer readCloser.Close()
 	return ParseJSON(readCloser), err
