@@ -68,10 +68,7 @@ var checkCmd = &cobra.Command{
 			}
 			bookmarks = pinboard.GetBookmarksFromFile(file, inputFormat)
 		} else {
-			token, _ := cmd.Flags().GetString("token")
-			if len(token) == 0 {
-				log.Fatal("Token parameter not set")
-			}
+			token := validateToken(cmd)
 			endpoint, _ := cmd.Flags().GetString("endpoint")
 			endpointUrl, _ := url.Parse(endpoint)
 

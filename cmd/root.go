@@ -27,3 +27,12 @@ func init() {
 	//  TODO: Use the viper config initialization
 	//	cobra.OnInitialize(initConfig)
 }
+
+func validateToken(cmd *cobra.Command) string {
+	token, _ := cmd.Flags().GetString("token")
+	if len(token) == 0 {
+		fmt.Println("ERROR: Token flag is mandatory for export command")
+		os.Exit(1)
+	}
+	return token
+}
