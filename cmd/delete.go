@@ -13,8 +13,6 @@ import (
 )
 
 func init() {
-	deleteCmd.Flags().StringP("token", "t", "", "The pinboard API token")
-	deleteCmd.Flags().String("endpoint", pinboard.DefaultEndpoint.String(), "URL of pinboard API endpoint")
 	deleteCmd.Flags().StringP("inputFile", "i", "-", "File containing links to delete")
 
 	RootCmd.AddCommand(deleteCmd)

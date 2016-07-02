@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bkittelmann/pinboard-checker/pinboard"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,9 @@ func Execute() {
 }
 
 func init() {
+	RootCmd.PersistentFlags().StringP("token", "t", "", "The pinboard API token")
+	RootCmd.PersistentFlags().String("endpoint", pinboard.DefaultEndpoint.String(), "URL of pinboard API endpoint")
+
 	//  TODO: Use the viper config initialization
 	//	cobra.OnInitialize(initConfig)
 }

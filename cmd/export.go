@@ -12,9 +12,6 @@ import (
 )
 
 func init() {
-	exportCmd.Flags().StringP("token", "t", "", "The pinboard API token")
-	exportCmd.Flags().String("endpoint", pinboard.DefaultEndpoint.String(), "URL of pinboard API endpoint")
-
 	RootCmd.AddCommand(exportCmd)
 }
 
