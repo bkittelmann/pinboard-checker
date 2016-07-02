@@ -3,6 +3,18 @@
 # this endpoint will return the same content as in testdata/bookmarks.json
 EXPORT_ENDPOINT="http://www.mocky.io/v2/5775832a0f0000e90997c48c/"
 
+@test "check: Token argument is required" {
+	run ./pinboard-checker check
+
+	[ "$status" -eq 1 ]
+}
+
+@test "delete: Token argument is required" {
+	run ./pinboard-checker delete
+
+	[ "$status" -eq 1 ]
+}
+
 @test "export: Get JSON output on stdout" {
 	run ./pinboard-checker export -t 'token' --endpoint $EXPORT_ENDPOINT
 
@@ -13,7 +25,8 @@ EXPORT_ENDPOINT="http://www.mocky.io/v2/5775832a0f0000e90997c48c/"
 }
 
 @test "export: Token argument is required" {
-	run ./pinboard-checker export --endpoint $EXPORT_ENDPOINT
+	run ./pinboard-checker export
 
 	[ "$status" -eq 1 ]
 }
+
