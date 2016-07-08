@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"sync"
+	"time"
 )
 
 type LookupFailure struct {
@@ -18,6 +19,8 @@ type Reporter interface {
 	onEnd()
 }
 
+var CheckTimeout = 10 * time.Second
+
 // we consider HTTP 429 indicative that the resource exists
 func isBadStatus(response *http.Response) bool {
 	return response.StatusCode != 200 && response.StatusCode != http.StatusTooManyRequests
@@ -28,7 +31,8 @@ func check(bookmark Bookmark) (bool, int, error) {
 
 	// TODO: Use same client in all workers
 	client := &http.Client{
-		Jar: cookieJar,
+		Jar:     cookieJar,
+		Timeout: CheckTimeout,
 	}
 
 	url := bookmark.Href
