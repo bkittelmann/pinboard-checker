@@ -3,10 +3,26 @@
 # this endpoint will return the same content as in testdata/bookmarks.json
 EXPORT_ENDPOINT="http://www.mocky.io/v2/5775832a0f0000e90997c48c/"
 
+@test "Check that total is listed" {
+    run bash -c "time ls -l | wc -l"
+    [ "$status" -eq 0 ]
+    [[ ${lines[0]} =~ "12" ]]
+}
+
 @test "check: Token argument is required" {
 	run ./pinboard-checker check
 
 	[ "$status" -eq 1 ]
+}
+
+@test "check: Timeout flag restricts runtime of link lookup" {
+	# Note: The `time` command outputs on stderr, won't be captured by bats generally.
+	# That's why we have to redirect the output into a variable to match its content.
+
+	output=$(time (echo 'http://www.briangoetz.com/pubs.html' | ./pinboard-checker check -i - --inputFormat=txt --timeout=1s 2>/dev/null 1>&2) 2>&1)
+	
+	# this checks that the time taken is 1 second and a few miliseconds
+	[[ $output =~ real[[:space:]]0m1.[0-9]+s ]]	
 }
 
 @test "delete: Token argument is required" {
