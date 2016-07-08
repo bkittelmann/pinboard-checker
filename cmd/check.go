@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/bkittelmann/pinboard-checker/pinboard"
 	"github.com/spf13/cobra"
@@ -16,6 +17,7 @@ var outputFile string
 var outputFormatRaw string
 var verbose bool
 var noColor bool
+var timeoutRaw string
 
 func init() {
 	checkCmd.Flags().StringVarP(&inputFile, "inputFile", "i", "", "File containing links to check. To read stdin use '-'.")
@@ -24,6 +26,7 @@ func init() {
 	checkCmd.Flags().StringVar(&outputFormatRaw, "outputFormat", "txt", "Allowed values are 'txt' (default) or 'json'")
 	checkCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose logging, will report successful link lookups")
 	checkCmd.Flags().BoolVar(&noColor, "noColor", false, "Do not use colorized status output")
+	checkCmd.Flags().StringVar(&timeoutRaw, "timeout", pinboard.CheckTimeout.String(), "Timeout for HTTP client calls")
 
 	RootCmd.AddCommand(checkCmd)
 }
@@ -56,6 +59,12 @@ var checkCmd = &cobra.Command{
 			log.Fatalf("Invalid output format: %s", outputFormatRaw)
 		}
 
+		// validate the timeout flag
+		timeout, parseErr := time.ParseDuration(timeoutRaw)
+		if parseErr != nil {
+			log.Fatalf("Invalid timeout value: %s", timeoutRaw)
+		}
+
 		reporter := makeReporter(outputFormat)
 
 		var bookmarks []pinboard.Bookmark
@@ -76,6 +85,6 @@ var checkCmd = &cobra.Command{
 			bookmarks, _ = client.GetAllBookmarks()
 		}
 
-		pinboard.CheckAll(bookmarks, reporter)
+		pinboard.CheckAll(bookmarks, reporter, timeout)
 	},
 }

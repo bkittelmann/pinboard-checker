@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 )
+
+var httpTimeout = 1 * time.Second
 
 func TestCheckGoodHttpStatus(t *testing.T) {
 	bookmark := Bookmark{Href: "http://httpbin.org/html"}
-	success, code, _ := check(bookmark)
+	success, code, _ := check(bookmark, httpTimeout)
 	if !success {
 		t.Errorf("HTTP code %d should be treated as success", code)
 	}
@@ -16,7 +19,7 @@ func TestCheckGoodHttpStatus(t *testing.T) {
 
 func TestCheckBadHttpStatus(t *testing.T) {
 	bookmark := Bookmark{Href: "http://httpbin.org/status/412"}
-	success, code, _ := check(bookmark)
+	success, code, _ := check(bookmark, httpTimeout)
 	if success {
 		t.Errorf("HTTP code %d should be treated as failure", code)
 	}
@@ -30,7 +33,7 @@ func TestSimpleReporterShowingAFailure(t *testing.T) {
 		Bookmark{Href: "http://httpbin.org/status/404"},
 		Bookmark{Href: "http://httpbin.org/status/200"},
 	}
-	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer))
+	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer), httpTimeout)
 
 	lineCount := strings.Count(buffer.String(), "\n")
 
@@ -46,7 +49,7 @@ func TestSimpleReporterShowingASucessInVerboseMode(t *testing.T) {
 	bookmarks := []Bookmark{
 		Bookmark{Href: "http://httpbin.org/status/200"},
 	}
-	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer))
+	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer), httpTimeout)
 
 	lineCount := strings.Count(buffer.String(), "\n")
 
@@ -65,7 +68,7 @@ func TestJSONReporterShowingAFailure(t *testing.T) {
 	}
 
 	reporter := NewJSONReporter(verbose, &buffer)
-	CheckAll(bookmarks, reporter)
+	CheckAll(bookmarks, reporter, httpTimeout)
 
 	failureCount := len(reporter.failures)
 	if failureCount != 1 {
@@ -94,7 +97,7 @@ func TestJSONReporterShowingSuccessInVerboseMode(t *testing.T) {
 	}
 
 	reporter := NewJSONReporter(verbose, &buffer)
-	CheckAll(bookmarks, reporter)
+	CheckAll(bookmarks, reporter, httpTimeout)
 
 	successCount := len(reporter.successes)
 	if successCount != 1 {

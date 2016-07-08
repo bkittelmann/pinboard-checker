@@ -26,13 +26,13 @@ func isBadStatus(response *http.Response) bool {
 	return response.StatusCode != 200 && response.StatusCode != http.StatusTooManyRequests
 }
 
-func check(bookmark Bookmark) (bool, int, error) {
+func check(bookmark Bookmark, timeout time.Duration) (bool, int, error) {
 	cookieJar, _ := cookiejar.New(nil)
 
 	// TODO: Use same client in all workers
 	client := &http.Client{
 		Jar:     cookieJar,
-		Timeout: CheckTimeout,
+		Timeout: timeout,
 	}
 
 	url := bookmark.Href
@@ -60,12 +60,12 @@ func check(bookmark Bookmark) (bool, int, error) {
 	return true, headResponse.StatusCode, nil
 }
 
-func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *sync.WaitGroup) {
+func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *sync.WaitGroup, timeout time.Duration) {
 	defer workgroup.Done()
 
 	for bookmark := range checkJobs {
 		debug("Worker %02d: Processing job for url %s", id, bookmark.Href)
-		valid, code, err := check(bookmark)
+		valid, code, err := check(bookmark, timeout)
 		if !valid {
 			reporter.onFailure(LookupFailure{bookmark, code, err})
 			debug("Worker %02d: ERROR: %s %d %s", id, bookmark.Href, code, err)
@@ -76,14 +76,14 @@ func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *syn
 	}
 }
 
-func CheckAll(bookmarks []Bookmark, reporter Reporter) {
+func CheckAll(bookmarks []Bookmark, reporter Reporter, timeout time.Duration) {
 	jobs := make(chan Bookmark, 10)
 	workgroup := new(sync.WaitGroup)
 
 	// start workers
 	for w := 1; w <= 10; w++ {
 		workgroup.Add(1)
-		go worker(w, jobs, reporter, workgroup)
+		go worker(w, jobs, reporter, workgroup, timeout)
 	}
 
 	// send off URLs to check
