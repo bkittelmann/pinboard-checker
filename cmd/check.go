@@ -20,6 +20,7 @@ var verbose bool
 var noColor bool
 var timeoutRaw string
 var requestRateRaw string
+var numberOfWorkers int
 
 func init() {
 	checkCmd.Flags().StringVarP(&inputFile, "inputFile", "i", "", "File containing links to check. To read stdin use '-'.")
@@ -30,6 +31,7 @@ func init() {
 	checkCmd.Flags().BoolVar(&noColor, "noColor", false, "Do not use colorized status output")
 	checkCmd.Flags().StringVar(&timeoutRaw, "timeout", pinboard.CheckTimeout.String(), "Timeout for HTTP client calls")
 	checkCmd.Flags().StringVar(&requestRateRaw, "requestRate", strconv.FormatInt(int64(pinboard.RequestsPerSecond), 10), "How many HTTP requests are allowed simultaneously")
+	checkCmd.Flags().IntVar(&numberOfWorkers, "numberOfWorkers", pinboard.DefaultNumberOfWorkers, "How many concurrent workers are used")
 	RootCmd.AddCommand(checkCmd)
 }
 
@@ -93,6 +95,6 @@ var checkCmd = &cobra.Command{
 			bookmarks, _ = client.GetAllBookmarks()
 		}
 
-		pinboard.CheckAll(bookmarks, reporter, timeout, requestRate)
+		pinboard.CheckAll(bookmarks, reporter, timeout, requestRate, numberOfWorkers)
 	},
 }

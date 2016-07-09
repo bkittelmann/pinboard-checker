@@ -23,6 +23,7 @@ type Reporter interface {
 
 var CheckTimeout = 10 * time.Second
 var RequestsPerSecond float64 = 10
+var DefaultNumberOfWorkers = 10
 
 // we consider HTTP 429 indicative that the resource exists
 func isBadStatus(response *http.Response) bool {
@@ -81,13 +82,13 @@ func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *syn
 	}
 }
 
-func CheckAll(bookmarks []Bookmark, reporter Reporter, timeout time.Duration, requestRate float64) {
-	jobs := make(chan Bookmark, 10)
+func CheckAll(bookmarks []Bookmark, reporter Reporter, timeout time.Duration, requestRate float64, numberOfWorkers int) {
+	jobs := make(chan Bookmark, numberOfWorkers)
 	workgroup := new(sync.WaitGroup)
 	tokenBucket := ratelimit.NewBucketWithRate(requestRate, int64(requestRate))
 
 	// start workers
-	for w := 1; w <= 10; w++ {
+	for w := 1; w <= numberOfWorkers; w++ {
 		workgroup.Add(1)
 		go worker(w, jobs, reporter, workgroup, timeout, tokenBucket)
 	}
