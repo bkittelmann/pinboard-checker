@@ -5,6 +5,8 @@ import (
 	"net/http/cookiejar"
 	"sync"
 	"time"
+
+	"github.com/juju/ratelimit"
 )
 
 type LookupFailure struct {
@@ -20,6 +22,7 @@ type Reporter interface {
 }
 
 var CheckTimeout = 10 * time.Second
+var RequestsPerSecond float64 = 10
 
 // we consider HTTP 429 indicative that the resource exists
 func isBadStatus(response *http.Response) bool {
@@ -36,6 +39,7 @@ func check(bookmark Bookmark, timeout time.Duration) (bool, int, error) {
 	}
 
 	url := bookmark.Href
+
 	headResponse, err := client.Head(url)
 	if err != nil {
 		return false, -1, err
@@ -60,10 +64,11 @@ func check(bookmark Bookmark, timeout time.Duration) (bool, int, error) {
 	return true, headResponse.StatusCode, nil
 }
 
-func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *sync.WaitGroup, timeout time.Duration) {
+func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *sync.WaitGroup, timeout time.Duration, tokenBucket *ratelimit.Bucket) {
 	defer workgroup.Done()
 
 	for bookmark := range checkJobs {
+		tokenBucket.Wait(1)
 		debug("Worker %02d: Processing job for url %s", id, bookmark.Href)
 		valid, code, err := check(bookmark, timeout)
 		if !valid {
@@ -79,11 +84,12 @@ func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *syn
 func CheckAll(bookmarks []Bookmark, reporter Reporter, timeout time.Duration) {
 	jobs := make(chan Bookmark, 10)
 	workgroup := new(sync.WaitGroup)
+	tokenBucket := ratelimit.NewBucketWithRate(RequestsPerSecond, int64(RequestsPerSecond))
 
 	// start workers
 	for w := 1; w <= 10; w++ {
 		workgroup.Add(1)
-		go worker(w, jobs, reporter, workgroup, timeout)
+		go worker(w, jobs, reporter, workgroup, timeout, tokenBucket)
 	}
 
 	// send off URLs to check
