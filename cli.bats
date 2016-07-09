@@ -19,7 +19,7 @@ EXPORT_ENDPOINT="http://www.mocky.io/v2/5775832a0f0000e90997c48c/"
 	# Note: The `time` command outputs on stderr, won't be captured by bats generally.
 	# That's why we have to redirect the output into a variable to match its content.
 
-	output=$(time (echo 'http://www.briangoetz.com/pubs.html' | ./pinboard-checker check -i - --inputFormat=txt --timeout=1s 2>/dev/null 1>&2) 2>&1)
+	output=$(time (echo 'http://httpbin.org/delay/3' | ./pinboard-checker check -i - --inputFormat=txt --timeout=1s 2>/dev/null 1>&2) 2>&1)
 	
 	# this checks that the time taken is 1 second and a few miliseconds
 	[[ $output =~ real[[:space:]]0m1.[0-9]+s ]]	
