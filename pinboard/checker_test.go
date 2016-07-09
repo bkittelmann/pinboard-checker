@@ -33,7 +33,7 @@ func TestSimpleReporterShowingAFailure(t *testing.T) {
 		Bookmark{Href: "http://httpbin.org/status/404"},
 		Bookmark{Href: "http://httpbin.org/status/200"},
 	}
-	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer), httpTimeout)
+	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer), httpTimeout, RequestsPerSecond)
 
 	lineCount := strings.Count(buffer.String(), "\n")
 
@@ -49,7 +49,7 @@ func TestSimpleReporterShowingASucessInVerboseMode(t *testing.T) {
 	bookmarks := []Bookmark{
 		Bookmark{Href: "http://httpbin.org/status/200"},
 	}
-	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer), httpTimeout)
+	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer), httpTimeout, RequestsPerSecond)
 
 	lineCount := strings.Count(buffer.String(), "\n")
 
@@ -68,7 +68,7 @@ func TestJSONReporterShowingAFailure(t *testing.T) {
 	}
 
 	reporter := NewJSONReporter(verbose, &buffer)
-	CheckAll(bookmarks, reporter, httpTimeout)
+	CheckAll(bookmarks, reporter, httpTimeout, RequestsPerSecond)
 
 	failureCount := len(reporter.failures)
 	if failureCount != 1 {
@@ -97,7 +97,7 @@ func TestJSONReporterShowingSuccessInVerboseMode(t *testing.T) {
 	}
 
 	reporter := NewJSONReporter(verbose, &buffer)
-	CheckAll(bookmarks, reporter, httpTimeout)
+	CheckAll(bookmarks, reporter, httpTimeout, RequestsPerSecond)
 
 	successCount := len(reporter.successes)
 	if successCount != 1 {

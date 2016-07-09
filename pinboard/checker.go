@@ -81,10 +81,10 @@ func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *syn
 	}
 }
 
-func CheckAll(bookmarks []Bookmark, reporter Reporter, timeout time.Duration) {
+func CheckAll(bookmarks []Bookmark, reporter Reporter, timeout time.Duration, requestRate float64) {
 	jobs := make(chan Bookmark, 10)
 	workgroup := new(sync.WaitGroup)
-	tokenBucket := ratelimit.NewBucketWithRate(RequestsPerSecond, int64(RequestsPerSecond))
+	tokenBucket := ratelimit.NewBucketWithRate(requestRate, int64(requestRate))
 
 	// start workers
 	for w := 1; w <= 10; w++ {
