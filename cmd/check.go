@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/bkittelmann/pinboard-checker/pinboard"
@@ -19,7 +18,7 @@ var outputFormatRaw string
 var verbose bool
 var noColor bool
 var timeoutRaw string
-var requestRateRaw string
+var requestRate int
 var numberOfWorkers int
 
 func init() {
@@ -30,7 +29,7 @@ func init() {
 	checkCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose logging, will report successful link lookups")
 	checkCmd.Flags().BoolVar(&noColor, "noColor", false, "Do not use colorized status output")
 	checkCmd.Flags().StringVar(&timeoutRaw, "timeout", pinboard.CheckTimeout.String(), "Timeout for HTTP client calls")
-	checkCmd.Flags().StringVar(&requestRateRaw, "requestRate", strconv.FormatInt(int64(pinboard.RequestsPerSecond), 10), "How many HTTP requests are allowed simultaneously")
+	checkCmd.Flags().IntVar(&requestRate, "requestRate", 10, "How many HTTP requests are allowed simultaneously")
 	checkCmd.Flags().IntVar(&numberOfWorkers, "numberOfWorkers", pinboard.DefaultNumberOfWorkers, "How many concurrent workers are used")
 	RootCmd.AddCommand(checkCmd)
 }
@@ -69,12 +68,6 @@ var checkCmd = &cobra.Command{
 			log.Fatalf("Invalid timeout value: %s", timeoutRaw)
 		}
 
-		// validate the request rate flag
-		requestRate, rateErr := strconv.ParseFloat(requestRateRaw, 64)
-		if rateErr != nil {
-			log.Fatalf("Invalid request rate value: %s", requestRateRaw)
-		}
-
 		reporter := makeReporter(outputFormat)
 
 		var bookmarks []pinboard.Bookmark
@@ -95,6 +88,13 @@ var checkCmd = &cobra.Command{
 			bookmarks, _ = client.GetAllBookmarks()
 		}
 
-		pinboard.CheckAll(bookmarks, reporter, timeout, requestRate, numberOfWorkers)
+		checker := &pinboard.Checker{
+			Reporter:        reporter,
+			RequestRate:     requestRate,
+			NumberOfWorkers: numberOfWorkers,
+
+			Http: pinboard.DefaultHttpClient(timeout),
+		}
+		checker.Run(bookmarks)
 	},
 }

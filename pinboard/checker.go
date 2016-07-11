@@ -30,18 +30,27 @@ func isBadStatus(response *http.Response) bool {
 	return response.StatusCode != 200 && response.StatusCode != http.StatusTooManyRequests
 }
 
-func check(bookmark Bookmark, timeout time.Duration) (bool, int, error) {
+type Checker struct {
+	Reporter        Reporter
+	RequestRate     int
+	NumberOfWorkers int
+
+	Http *http.Client
+}
+
+func DefaultHttpClient(timeout time.Duration) *http.Client {
 	cookieJar, _ := cookiejar.New(nil)
 
-	// TODO: Use same client in all workers
-	client := &http.Client{
+	return &http.Client{
 		Jar:     cookieJar,
 		Timeout: timeout,
 	}
+}
 
+func (checker *Checker) check(bookmark Bookmark) (bool, int, error) {
 	url := bookmark.Href
 
-	headResponse, err := client.Head(url)
+	headResponse, err := checker.Http.Head(url)
 	if err != nil {
 		return false, -1, err
 	}
@@ -49,7 +58,7 @@ func check(bookmark Bookmark, timeout time.Duration) (bool, int, error) {
 	headResponse.Body.Close()
 
 	if isBadStatus(headResponse) {
-		getResponse, err := client.Get(url)
+		getResponse, err := checker.Http.Get(url)
 
 		if err != nil {
 			return false, -1, err
@@ -65,32 +74,33 @@ func check(bookmark Bookmark, timeout time.Duration) (bool, int, error) {
 	return true, headResponse.StatusCode, nil
 }
 
-func worker(id int, checkJobs <-chan Bookmark, reporter Reporter, workgroup *sync.WaitGroup, timeout time.Duration, tokenBucket *ratelimit.Bucket) {
+func (checker *Checker) worker(id int, checkJobs <-chan Bookmark, workgroup *sync.WaitGroup, tokenBucket *ratelimit.Bucket) {
 	defer workgroup.Done()
 
 	for bookmark := range checkJobs {
 		tokenBucket.Wait(1)
 		debug("Worker %02d: Processing job for url %s", id, bookmark.Href)
-		valid, code, err := check(bookmark, timeout)
+		valid, code, err := checker.check(bookmark)
 		if !valid {
-			reporter.onFailure(LookupFailure{bookmark, code, err})
+			checker.Reporter.onFailure(LookupFailure{bookmark, code, err})
 			debug("Worker %02d: ERROR: %s %d %s", id, bookmark.Href, code, err)
 		} else {
-			reporter.onSuccess(bookmark)
+			checker.Reporter.onSuccess(bookmark)
 			debug("Worker %02d: Success for %s\n", id, bookmark.Href)
 		}
 	}
 }
 
-func CheckAll(bookmarks []Bookmark, reporter Reporter, timeout time.Duration, requestRate float64, numberOfWorkers int) {
-	jobs := make(chan Bookmark, numberOfWorkers)
+func (checker *Checker) Run(bookmarks []Bookmark) {
+
+	jobs := make(chan Bookmark, checker.NumberOfWorkers)
 	workgroup := new(sync.WaitGroup)
-	tokenBucket := ratelimit.NewBucketWithRate(requestRate, int64(requestRate))
+	tokenBucket := ratelimit.NewBucketWithRate(float64(checker.RequestRate), int64(checker.RequestRate))
 
 	// start workers
-	for w := 1; w <= numberOfWorkers; w++ {
+	for w := 1; w <= checker.NumberOfWorkers; w++ {
 		workgroup.Add(1)
-		go worker(w, jobs, reporter, workgroup, timeout, tokenBucket)
+		go checker.worker(w, jobs, workgroup, tokenBucket)
 	}
 
 	// send off URLs to check
@@ -100,5 +110,5 @@ func CheckAll(bookmarks []Bookmark, reporter Reporter, timeout time.Duration, re
 
 	close(jobs)
 	workgroup.Wait()
-	reporter.onEnd()
+	checker.Reporter.onEnd()
 }

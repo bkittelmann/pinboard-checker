@@ -7,11 +7,18 @@ import (
 	"time"
 )
 
-var httpTimeout = 1 * time.Second
+func makeChecker() *Checker {
+	return &Checker{
+		RequestRate:     10,
+		NumberOfWorkers: 10,
+		Http:            DefaultHttpClient(5 * time.Second),
+	}
+}
 
 func TestCheckGoodHttpStatus(t *testing.T) {
 	bookmark := Bookmark{Href: "http://httpbin.org/html"}
-	success, code, _ := check(bookmark, httpTimeout)
+	checker := makeChecker()
+	success, code, _ := checker.check(bookmark)
 	if !success {
 		t.Errorf("HTTP code %d should be treated as success", code)
 	}
@@ -19,7 +26,8 @@ func TestCheckGoodHttpStatus(t *testing.T) {
 
 func TestCheckBadHttpStatus(t *testing.T) {
 	bookmark := Bookmark{Href: "http://httpbin.org/status/412"}
-	success, code, _ := check(bookmark, httpTimeout)
+	checker := makeChecker()
+	success, code, _ := checker.check(bookmark)
 	if success {
 		t.Errorf("HTTP code %d should be treated as failure", code)
 	}
@@ -33,7 +41,9 @@ func TestSimpleReporterShowingAFailure(t *testing.T) {
 		Bookmark{Href: "http://httpbin.org/status/404"},
 		Bookmark{Href: "http://httpbin.org/status/200"},
 	}
-	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer), httpTimeout, RequestsPerSecond, DefaultNumberOfWorkers)
+	checker := makeChecker()
+	checker.Reporter = NewSimpleFailureReporter(verbose, true, &buffer)
+	checker.Run(bookmarks)
 
 	lineCount := strings.Count(buffer.String(), "\n")
 
@@ -49,7 +59,9 @@ func TestSimpleReporterShowingASucessInVerboseMode(t *testing.T) {
 	bookmarks := []Bookmark{
 		Bookmark{Href: "http://httpbin.org/status/200"},
 	}
-	CheckAll(bookmarks, NewSimpleFailureReporter(verbose, true, &buffer), httpTimeout, RequestsPerSecond, DefaultNumberOfWorkers)
+	checker := makeChecker()
+	checker.Reporter = NewSimpleFailureReporter(verbose, true, &buffer)
+	checker.Run(bookmarks)
 
 	lineCount := strings.Count(buffer.String(), "\n")
 
@@ -68,7 +80,11 @@ func TestJSONReporterShowingAFailure(t *testing.T) {
 	}
 
 	reporter := NewJSONReporter(verbose, &buffer)
-	CheckAll(bookmarks, reporter, httpTimeout, RequestsPerSecond, DefaultNumberOfWorkers)
+
+	checker := makeChecker()
+	checker.Reporter = reporter
+
+	checker.Run(bookmarks)
 
 	failureCount := len(reporter.failures)
 	if failureCount != 1 {
@@ -97,7 +113,9 @@ func TestJSONReporterShowingSuccessInVerboseMode(t *testing.T) {
 	}
 
 	reporter := NewJSONReporter(verbose, &buffer)
-	CheckAll(bookmarks, reporter, httpTimeout, RequestsPerSecond, DefaultNumberOfWorkers)
+	checker := makeChecker()
+	checker.Reporter = reporter
+	checker.Run(bookmarks)
 
 	successCount := len(reporter.successes)
 	if successCount != 1 {
