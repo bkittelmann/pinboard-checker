@@ -29,7 +29,7 @@ func init() {
 	checkCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose logging, will report successful link lookups")
 	checkCmd.Flags().BoolVar(&noColor, "noColor", false, "Do not use colorized status output")
 	checkCmd.Flags().StringVar(&timeoutRaw, "timeout", pinboard.DefaultTimeout.String(), "Timeout for HTTP client calls")
-	checkCmd.Flags().IntVar(&requestRate, "requestRate", 10, "How many HTTP requests are allowed simultaneously")
+	checkCmd.Flags().IntVar(&requestRate, "requestRate", pinboard.DefaultRequestRate, "How many HTTP requests are allowed simultaneously")
 	checkCmd.Flags().IntVar(&numberOfWorkers, "numberOfWorkers", pinboard.DefaultNumberOfWorkers, "How many concurrent workers are used")
 	RootCmd.AddCommand(checkCmd)
 }

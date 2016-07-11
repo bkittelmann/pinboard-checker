@@ -8,7 +8,7 @@ import (
 
 func makeChecker() *Checker {
 	return &Checker{
-		RequestRate:     10,
+		RequestRate:     DefaultRequestRate,
 		NumberOfWorkers: 10,
 		Http:            DefaultHttpClient(DefaultTimeout),
 	}

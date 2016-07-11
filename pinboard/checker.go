@@ -22,7 +22,7 @@ type Reporter interface {
 }
 
 var DefaultTimeout = 10 * time.Second
-var RequestsPerSecond float64 = 10
+var DefaultRequestRate = 10
 var DefaultNumberOfWorkers = 10
 
 // we consider HTTP 429 indicative that the resource exists
