@@ -1,6 +1,7 @@
 package pinboard
 
 import (
+	"crypto/tls"
 	"net/http"
 	"net/http/cookiejar"
 	"sync"
@@ -38,12 +39,23 @@ type Checker struct {
 	Http *http.Client
 }
 
-func DefaultHttpClient(timeout time.Duration) *http.Client {
+func TlsConfigAllowingInsecure() *tls.Config {
+	return &tls.Config{
+		InsecureSkipVerify: true,
+	}
+}
+
+func DefaultHttpClient(timeout time.Duration, tls *tls.Config) *http.Client {
 	cookieJar, _ := cookiejar.New(nil)
 
+	transport := &http.Transport{
+		TLSClientConfig: tls,
+	}
+
 	return &http.Client{
-		Jar:     cookieJar,
-		Timeout: timeout,
+		Jar:       cookieJar,
+		Timeout:   timeout,
+		Transport: transport,
 	}
 }
 
