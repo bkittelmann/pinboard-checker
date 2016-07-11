@@ -21,7 +21,7 @@ type Reporter interface {
 	onEnd()
 }
 
-var CheckTimeout = 10 * time.Second
+var DefaultTimeout = 10 * time.Second
 var RequestsPerSecond float64 = 10
 var DefaultNumberOfWorkers = 10
 

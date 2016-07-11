@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"strings"
 	"testing"
-	"time"
 )
 
 func makeChecker() *Checker {
 	return &Checker{
 		RequestRate:     10,
 		NumberOfWorkers: 10,
-		Http:            DefaultHttpClient(5 * time.Second),
+		Http:            DefaultHttpClient(DefaultTimeout),
 	}
 }
 
