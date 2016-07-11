@@ -10,7 +10,7 @@ func makeChecker() *Checker {
 	return &Checker{
 		RequestRate:     DefaultRequestRate,
 		NumberOfWorkers: DefaultNumberOfWorkers,
-		Http:            DefaultHttpClient(DefaultTimeout),
+		Http:            DefaultHttpClient(DefaultTimeout, TlsConfigAllowingInsecure()),
 	}
 }
 
