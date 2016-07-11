@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/bkittelmann/pinboard-checker.svg?branch=master)](https://travis-ci.org/bkittelmann/pinboard-checker)
+
 # Testing the program via bash
 
 As a kind of integration test, we use the [`Bats`](https://github.com/sstephenson/bats#readme)
