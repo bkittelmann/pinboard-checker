@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"crypto/tls"
 	"io"
 	"log"
 	"net/url"
@@ -20,6 +21,7 @@ var noColor bool
 var timeoutRaw string
 var requestRate int
 var numberOfWorkers int
+var skipVerify bool
 
 func init() {
 	checkCmd.Flags().StringVarP(&inputFile, "inputFile", "i", "", "File containing links to check. To read stdin use '-'.")
@@ -31,6 +33,8 @@ func init() {
 	checkCmd.Flags().StringVar(&timeoutRaw, "timeout", pinboard.DefaultTimeout.String(), "Timeout for HTTP client calls")
 	checkCmd.Flags().IntVar(&requestRate, "requestRate", pinboard.DefaultRequestRate, "How many HTTP requests are allowed simultaneously")
 	checkCmd.Flags().IntVar(&numberOfWorkers, "numberOfWorkers", pinboard.DefaultNumberOfWorkers, "How many concurrent workers are used")
+	checkCmd.Flags().BoolVar(&skipVerify, "skipVerify", false, "If set, do not verify hosts of HTTPs domains. Avoids certificate errors in certain cases.")
+
 	RootCmd.AddCommand(checkCmd)
 }
 
@@ -88,12 +92,20 @@ var checkCmd = &cobra.Command{
 			bookmarks, _ = client.GetAllBookmarks()
 		}
 
+		var tlsConfig *tls.Config
+		skipVerify, _ := cmd.Flags().GetBool("skipVerify")
+		if skipVerify {
+			tlsConfig = pinboard.TlsConfigAllowingInsecure()
+		} else {
+			tlsConfig = &tls.Config{}
+		}
+
 		checker := &pinboard.Checker{
 			Reporter:        reporter,
 			RequestRate:     requestRate,
 			NumberOfWorkers: numberOfWorkers,
 
-			Http: pinboard.DefaultHttpClient(timeout),
+			Http: pinboard.DefaultHttpClient(timeout, tlsConfig),
 		}
 		checker.Run(bookmarks)
 	},
