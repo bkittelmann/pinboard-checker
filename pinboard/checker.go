@@ -2,6 +2,8 @@ package pinboard
 
 import (
 	"crypto/tls"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"sync"
@@ -62,20 +64,23 @@ func DefaultHttpClient(timeout time.Duration, tls *tls.Config) *http.Client {
 func (checker *Checker) check(bookmark Bookmark) (bool, int, error) {
 	url := bookmark.Href
 
-	headResponse, err := checker.Http.Head(url)
+	headRequest, _ := http.NewRequest(http.MethodHead, url, nil)
+	headResponse, err := checker.Http.Do(headRequest)
 	if err != nil {
 		return false, -1, err
 	}
-
+	io.Copy(ioutil.Discard, headResponse.Body)
 	headResponse.Body.Close()
 
 	if isBadStatus(headResponse) {
-		getResponse, err := checker.Http.Get(url)
+		getRequest, _ := http.NewRequest(http.MethodGet, url, nil)
+		getResponse, err := checker.Http.Do(getRequest)
 
 		if err != nil {
 			return false, -1, err
 		}
 
+		io.Copy(ioutil.Discard, getResponse.Body)
 		getResponse.Body.Close()
 
 		if isBadStatus(getResponse) {
