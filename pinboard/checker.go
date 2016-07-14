@@ -64,31 +64,31 @@ func DefaultHttpClient(timeout time.Duration, tls *tls.Config) *http.Client {
 func (checker *Checker) check(bookmark Bookmark) (bool, int, error) {
 	url := bookmark.Href
 
-	headRequest, _ := http.NewRequest(http.MethodHead, url, nil)
-	headResponse, err := checker.Http.Do(headRequest)
+	headResponse, err := checker.requestUrl(http.MethodHead, url)
 	if err != nil {
 		return false, -1, err
 	}
-	io.Copy(ioutil.Discard, headResponse.Body)
-	headResponse.Body.Close()
 
 	if isBadStatus(headResponse) {
-		getRequest, _ := http.NewRequest(http.MethodGet, url, nil)
-		getResponse, err := checker.Http.Do(getRequest)
-
+		getResponse, err := checker.requestUrl(http.MethodGet, url)
 		if err != nil {
 			return false, -1, err
 		}
-
-		io.Copy(ioutil.Discard, getResponse.Body)
-		getResponse.Body.Close()
-
-		if isBadStatus(getResponse) {
-			return false, getResponse.StatusCode, err
-		}
+		return !isBadStatus(getResponse), getResponse.StatusCode, nil
 	}
 
 	return true, headResponse.StatusCode, nil
+}
+
+func (checker *Checker) requestUrl(method string, url string) (*http.Response, error) {
+	request, _ := http.NewRequest(method, url, nil)
+	response, err := checker.Http.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	io.Copy(ioutil.Discard, response.Body)
+	response.Body.Close()
+	return response, nil
 }
 
 func (checker *Checker) worker(id int, checkJobs <-chan Bookmark, workgroup *sync.WaitGroup, tokenBucket *ratelimit.Bucket) {
