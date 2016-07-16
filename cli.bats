@@ -3,12 +3,6 @@
 # this endpoint will return the same content as in testdata/bookmarks.json
 EXPORT_ENDPOINT="http://www.mocky.io/v2/5775832a0f0000e90997c48c/"
 
-@test "Check that total is listed" {
-    run bash -c "time ls -l | wc -l"
-    [ "$status" -eq 0 ]
-    [[ ${lines[0]} =~ "12" ]]
-}
-
 @test "check: Token argument is required" {
 	run ./pinboard-checker check
 
