@@ -6,6 +6,7 @@ import (
 
 	"github.com/bkittelmann/pinboard-checker/pinboard"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var RootCmd = &cobra.Command{
@@ -24,12 +25,27 @@ func init() {
 	RootCmd.PersistentFlags().StringP("token", "t", "", "The pinboard API token")
 	RootCmd.PersistentFlags().String("endpoint", pinboard.DefaultEndpoint.String(), "URL of pinboard API endpoint")
 
-	//  TODO: Use the viper config initialization
-	//	cobra.OnInitialize(initConfig)
+	// initialize Viper to set flags from content in config files
+	viper.SetConfigName("pinboard-checker")
+	viper.AddConfigPath("./")
+	viper.AddConfigPath("$HOME/.pinboard-checker")
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		switch err.(type) {
+		case viper.UnsupportedConfigError:
+			// do nothing, this means no configuration is available, but flags could still be set
+		default:
+			fmt.Printf("Error reading config file %s: %s\n", viper.ConfigFileUsed(), err.Error())
+			os.Exit(-1)
+		}
+	}
+
+	viper.BindPFlag("token", RootCmd.PersistentFlags().Lookup("token"))
 }
 
-func validateToken(cmd *cobra.Command) string {
-	token, _ := cmd.Flags().GetString("token")
+func validateToken() string {
+	token := viper.GetString("token")
 	if len(token) == 0 {
 		fmt.Println("ERROR: Token flag is mandatory for export command")
 		os.Exit(1)

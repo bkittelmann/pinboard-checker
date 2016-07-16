@@ -24,7 +24,7 @@ var deleteCmd = &cobra.Command{
 	Long:  "...",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		token := validateToken(cmd)
+		token := validateToken()
 		endpoint, _ := cmd.Flags().GetString("endpoint")
 		endpointUrl, _ := url.Parse(endpoint)
 		inputFile, _ := cmd.Flags().GetString("inputFile")

@@ -84,7 +84,7 @@ var checkCmd = &cobra.Command{
 			}
 			bookmarks = pinboard.GetBookmarksFromFile(file, inputFormat)
 		} else {
-			token := validateToken(cmd)
+			token := validateToken()
 			endpoint, _ := cmd.Flags().GetString("endpoint")
 			endpointUrl, _ := url.Parse(endpoint)
 
