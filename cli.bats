@@ -4,7 +4,11 @@
 EXPORT_ENDPOINT="http://www.mocky.io/v2/5775832a0f0000e90997c48c/"
 
 # this will prevent a token being accidentally read from your user's config
-export PINBOARD_CHECKER_TOKEN=''
+setup() {
+	if [ -f ~/.pinboard-checker/pinboard-checker.yaml ]; then
+		mv ~/.pinboard-checker/pinboard-checker.yaml ~/.pinboard-checker/bak.pinboard-checker.yaml
+	fi 
+}
 
 @test "check: Token argument is required" {
 	run ./pinboard-checker check
@@ -43,3 +47,8 @@ export PINBOARD_CHECKER_TOKEN=''
 	[ "$status" -eq 1 ]
 }
 
+teardown() {
+	if [ -f ~/.pinboard-checker/bak.pinboard-checker.yaml ]; then
+		mv ~/.pinboard-checker/bak.pinboard-checker.yaml ~/.pinboard-checker/pinboard-checker.yaml
+	fi 
+}
