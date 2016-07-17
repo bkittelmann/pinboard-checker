@@ -10,35 +10,39 @@ import (
 
 	"github.com/bkittelmann/pinboard-checker/pinboard"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var inputFile string
-var inputFormatRaw string
 var outputFile string
-var outputFormatRaw string
-var verbose bool
-var noColor bool
-var timeoutRaw string
-var requestRate int
-var numberOfWorkers int
-var skipVerify bool
 
 func init() {
 	checkCmd.Flags().StringVarP(&inputFile, "inputFile", "i", "", "File containing links to check. To read stdin use '-'.")
-	checkCmd.Flags().StringVar(&inputFormatRaw, "inputFormat", "json", "Format of file with links. Can be either 'json' (default) or 'txt'")
+	checkCmd.Flags().String("inputFormat", "json", "Format of file with links. Can be either 'json' (default) or 'txt'")
 	checkCmd.Flags().StringVarP(&outputFile, "outputFile", "o", "-", "Where the report should be written to")
-	checkCmd.Flags().StringVar(&outputFormatRaw, "outputFormat", "txt", "Allowed values are 'txt' (default) or 'json'")
-	checkCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose logging, will report successful link lookups")
-	checkCmd.Flags().BoolVar(&noColor, "noColor", false, "Do not use colorized status output")
-	checkCmd.Flags().StringVar(&timeoutRaw, "timeout", pinboard.DefaultTimeout.String(), "Timeout for HTTP client calls")
-	checkCmd.Flags().IntVar(&requestRate, "requestRate", pinboard.DefaultRequestRate, "How many HTTP requests are allowed simultaneously")
-	checkCmd.Flags().IntVar(&numberOfWorkers, "numberOfWorkers", pinboard.DefaultNumberOfWorkers, "How many concurrent workers are used")
-	checkCmd.Flags().BoolVar(&skipVerify, "skipVerify", false, "If set, do not verify hosts of HTTPs domains. Avoids certificate errors in certain cases.")
+	checkCmd.Flags().String("outputFormat", "txt", "Allowed values are 'txt' (default) or 'json'")
+	checkCmd.Flags().BoolP("verbose", "v", false, "Verbose logging, will report successful link lookups")
+	checkCmd.Flags().Bool("noColor", false, "Do not use colorized status output")
+	checkCmd.Flags().String("timeout", pinboard.DefaultTimeout.String(), "Timeout for HTTP client calls")
+	checkCmd.Flags().Int("requestRate", pinboard.DefaultRequestRate, "How many HTTP requests are allowed simultaneously")
+	checkCmd.Flags().Int("numberOfWorkers", pinboard.DefaultNumberOfWorkers, "How many concurrent workers are used")
+	checkCmd.Flags().Bool("skipVerify", false, "If set, do not verify hosts of HTTPs domains. Avoids certificate errors in certain cases.")
+
+	viper.BindPFlag("inputFormat", checkCmd.Flags().Lookup("inputFormat"))
+	viper.BindPFlag("outputFormat", checkCmd.Flags().Lookup("outputFormat"))
+	viper.BindPFlag("verbose", checkCmd.Flags().Lookup("verbose"))
+	viper.BindPFlag("noColor", checkCmd.Flags().Lookup("noColor"))
+	viper.BindPFlag("timeout", checkCmd.Flags().Lookup("timeout"))
+	viper.BindPFlag("requestRate", checkCmd.Flags().Lookup("requestRate"))
+	viper.BindPFlag("numberOfWorkers", checkCmd.Flags().Lookup("numberOfWorkers"))
+	viper.BindPFlag("skipVerify", checkCmd.Flags().Lookup("skipVerify"))
 
 	RootCmd.AddCommand(checkCmd)
 }
 
 func makeReporter(format pinboard.Format) pinboard.Reporter {
+	verbose := viper.GetBool("verbose")
+	noColor := viper.GetBool("noColor")
 	var reporter pinboard.Reporter
 	switch format {
 	case pinboard.JSON:
@@ -56,17 +60,20 @@ var checkCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		// validate that format flags contain valid values
+		inputFormatRaw := viper.GetString("inputFormat")
 		inputFormat, inputErr := pinboard.FormatFromString(inputFormatRaw)
 		if inputErr != nil {
 			log.Fatalf("Invalid input format: %s", inputFormatRaw)
 		}
 
+		outputFormatRaw := viper.GetString("outputFormat")
 		outputFormat, outputErr := pinboard.FormatFromString(outputFormatRaw)
 		if outputErr != nil {
 			log.Fatalf("Invalid output format: %s", outputFormatRaw)
 		}
 
 		// validate the timeout flag
+		timeoutRaw := viper.GetString("timeout")
 		timeout, parseErr := time.ParseDuration(timeoutRaw)
 		if parseErr != nil {
 			log.Fatalf("Invalid timeout value: %s", timeoutRaw)
@@ -85,7 +92,7 @@ var checkCmd = &cobra.Command{
 			bookmarks = pinboard.GetBookmarksFromFile(file, inputFormat)
 		} else {
 			token := validateToken()
-			endpoint, _ := cmd.Flags().GetString("endpoint")
+			endpoint := viper.GetString("endpoint")
 			endpointUrl, _ := url.Parse(endpoint)
 
 			client := pinboard.NewClient(token, endpointUrl)
@@ -93,8 +100,7 @@ var checkCmd = &cobra.Command{
 		}
 
 		var tlsConfig *tls.Config
-		skipVerify, _ := cmd.Flags().GetBool("skipVerify")
-		if skipVerify {
+		if viper.GetBool("skipVerify") {
 			tlsConfig = pinboard.TlsConfigAllowingInsecure()
 		} else {
 			tlsConfig = &tls.Config{}
@@ -102,8 +108,8 @@ var checkCmd = &cobra.Command{
 
 		checker := &pinboard.Checker{
 			Reporter:        reporter,
-			RequestRate:     requestRate,
-			NumberOfWorkers: numberOfWorkers,
+			RequestRate:     viper.GetInt("requestRate"),
+			NumberOfWorkers: viper.GetInt("numberOfWorkers"),
 
 			Http: pinboard.DefaultHttpClient(timeout, tlsConfig),
 		}

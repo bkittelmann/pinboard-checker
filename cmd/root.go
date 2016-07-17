@@ -42,6 +42,7 @@ func init() {
 	}
 
 	viper.BindPFlag("token", RootCmd.PersistentFlags().Lookup("token"))
+	viper.BindPFlag("endpoint", RootCmd.PersistentFlags().Lookup("endpoint"))
 
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("PINBOARD_CHECKER")

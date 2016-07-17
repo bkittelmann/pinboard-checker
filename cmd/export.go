@@ -8,6 +8,7 @@ import (
 
 	"github.com/bkittelmann/pinboard-checker/pinboard"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -22,7 +23,7 @@ var exportCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		token := validateToken()
 
-		endpoint, _ := cmd.Flags().GetString("endpoint")
+		endpoint := viper.GetString("endpoint")
 		endpointUrl, _ := url.Parse(endpoint)
 
 		client := pinboard.NewClient(token, endpointUrl)
