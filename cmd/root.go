@@ -42,6 +42,9 @@ func init() {
 	}
 
 	viper.BindPFlag("token", RootCmd.PersistentFlags().Lookup("token"))
+
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("PINBOARD_CHECKER")
 }
 
 func validateToken() string {

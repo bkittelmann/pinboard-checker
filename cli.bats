@@ -3,6 +3,9 @@
 # this endpoint will return the same content as in testdata/bookmarks.json
 EXPORT_ENDPOINT="http://www.mocky.io/v2/5775832a0f0000e90997c48c/"
 
+# this will prevent a token being accidentally read from your user's config
+export PINBOARD_CHECKER_TOKEN=''
+
 @test "check: Token argument is required" {
 	run ./pinboard-checker check
 
