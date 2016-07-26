@@ -181,25 +181,41 @@ func (client *Client) GetAllBookmarks() ([]Bookmark, error) {
 	return ParseJSON(readCloser), err
 }
 
-func (client *Client) DeleteBookmark(bookmark Bookmark) {
+func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
 	endpoint := client.buildDeleteEndpoint(bookmark.Href)
 
 	debug("Deleting %s\n", bookmark.Href)
 
 	response, err := http.Get(endpoint)
+	if err != nil {
+		return err
+	}
 	defer response.Body.Close()
 
-	if err != nil {
-		log.Fatalf("ERROR: %s", err)
-	}
-
 	body, err := ioutil.ReadAll(response.Body)
-
 	if err != nil {
-		log.Fatalf("ERROR: %s", err)
+		return err
 	}
 
-	debug("%s", body)
+	// anonymous struct for response, TODO: Make it a type Result
+	result := struct {
+		Code string `json:"result_code"`
+	}{}
+
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return err
+	}
+
+	if result.Code == "item not found" {
+		return errors.New(fmt.Sprintf("%s was not found in pinboard", bookmark.Href))
+	}
+
+	if result.Code != "done" {
+		return errors.New(fmt.Sprintf("unexpected result code '%s'", result.Code))
+	}
+
+	return err
 }
 
 func NewClient(token string, endpoint *url.URL) *Client {

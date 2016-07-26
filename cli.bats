@@ -3,6 +3,12 @@
 # this endpoint will return the same content as in testdata/bookmarks.json
 EXPORT_ENDPOINT="http://www.mocky.io/v2/5775832a0f0000e90997c48c/"
 
+# simulates a successful delete via the pinboard API
+DELETE_OK_ENDPOINT="http://www.mocky.io/v2/579755b6260000dd1217facc/"
+
+# simulates a failed delete via the pinboard API
+DELETE_FAIL_ENDPOINT="http://www.mocky.io/v2/579755d3260000dc1217facd/"
+
 # this will prevent a token being accidentally read from your user's config
 setup() {
 	if [ -f ~/.pinboard-checker/pinboard-checker.yaml ]; then
@@ -28,6 +34,18 @@ setup() {
 
 @test "delete: Token argument is required" {
 	run ./pinboard-checker delete
+
+	[ "$status" -eq 1 ]
+}
+
+@test "delete: Existing bookmark gets deleted" {
+	run ./pinboard-checker delete -t "token" --endpoint $DELETE_OK_ENDPOINT http://example.com
+
+	[ "$status" -eq 0 ]
+}
+
+@test "delete: Non-existing bookmark can not be deleted" {
+	run ./pinboard-checker delete -t "token" --endpoint $DELETE_FAIL_ENDPOINT http://example.com
 
 	[ "$status" -eq 1 ]
 }

@@ -62,7 +62,13 @@ By default this will connect to your pinboard account, read all your bookmarks, 
 
 ### `delete` command
 
-TBD
+Easily delete URLs that you have bookmarked.
+
+```
+$ ./pinboard-checker delete -t APITOKEN http://example.com
+```
+
+You can either supply the URLs to be deleted as arguments to the `delete` command, or read the content of a file (see the `--inputFile` parameter documentation).
 
 ### `export` command
 

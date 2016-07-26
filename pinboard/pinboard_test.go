@@ -3,11 +3,47 @@ package pinboard
 import (
 	"bufio"
 	"bytes"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
 )
+
+func TestDeleteNonExistingBookmarkReturnsError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, `{"result_code":"item not found"}`)
+	}))
+	defer server.Close()
+
+	endpointUrl, _ := url.Parse(server.URL)
+
+	client := NewClient("token", endpointUrl)
+
+	err := client.DeleteBookmark(Bookmark{Href: "example.com", Description: ""})
+	if err == nil {
+		t.Error("Expected an error to be returned if non-existing URL is being deleted")
+	}
+}
+
+func TestDeleteExistingBookmark(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, `{"result_code":"done"}`)
+	}))
+	defer server.Close()
+
+	endpointUrl, _ := url.Parse(server.URL)
+
+	client := NewClient("token", endpointUrl)
+
+	err := client.DeleteBookmark(Bookmark{Href: "example.com", Description: ""})
+	if err != nil {
+		t.Errorf("No error expected, got %s", err)
+	}
+}
 
 func TestParseJSON(t *testing.T) {
 	file, _ := os.Open("testdata/bookmarks.json")
