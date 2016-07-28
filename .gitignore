@@ -4,3 +4,4 @@ pinboard-checker
 *.csv
 notes.md
 *.out
+coverage.txt
