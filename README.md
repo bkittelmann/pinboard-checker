@@ -1,6 +1,7 @@
 # pinboard-checker
 
 [![Build Status](https://travis-ci.org/bkittelmann/pinboard-checker.svg?branch=master)](https://travis-ci.org/bkittelmann/pinboard-checker)
+[![codecov](https://codecov.io/gh/bkittelmann/pinboard-checker/branch/master/graph/badge.svg)](https://codecov.io/gh/bkittelmann/pinboard-checker)
 
 This command-line tool checks bookmarks stored on [pinboard.in](https://pinboard.in) if they are still working. For any errors encountered a report will be generated.
 
