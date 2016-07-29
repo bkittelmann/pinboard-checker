@@ -44,7 +44,7 @@ To read from stdout, use '-' as file name.`,
 			inputFile, _ := cmd.Flags().GetString("inputFile")
 			switch inputFile {
 			case "":
-				logger.Fatalf("Invalid: No args given, and no inputFile parameter used")
+				logger.Fatalf("No args given, and no inputFile parameter used")
 			case "-":
 				reader = os.Stdin
 			default:
@@ -70,7 +70,7 @@ func deleteAll(token string, endpoint *url.URL, bookmarks []pinboard.Bookmark) (
 	for _, bookmark := range bookmarks {
 		delErr := client.DeleteBookmark(bookmark)
 		if delErr != nil {
-			logger.Printf("Error trying to delete %s: %s", bookmark.Href, delErr)
+			logger.Warnf("Error trying to delete %s: %s", bookmark.Href, delErr)
 			errorDuringDelete = true
 		}
 	}
