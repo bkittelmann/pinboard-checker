@@ -3,7 +3,6 @@ package cmd
 import (
 	"crypto/tls"
 	"io"
-	"log"
 	"net/url"
 	"os"
 	"time"
@@ -63,20 +62,20 @@ var checkCmd = &cobra.Command{
 		inputFormatRaw := viper.GetString("inputFormat")
 		inputFormat, inputErr := pinboard.FormatFromString(inputFormatRaw)
 		if inputErr != nil {
-			log.Fatalf("Invalid input format: %s", inputFormatRaw)
+			logger.Fatalf("Invalid input format: %s", inputFormatRaw)
 		}
 
 		outputFormatRaw := viper.GetString("outputFormat")
 		outputFormat, outputErr := pinboard.FormatFromString(outputFormatRaw)
 		if outputErr != nil {
-			log.Fatalf("Invalid output format: %s", outputFormatRaw)
+			logger.Fatalf("Invalid output format: %s", outputFormatRaw)
 		}
 
 		// validate the timeout flag
 		timeoutRaw := viper.GetString("timeout")
 		timeout, parseErr := time.ParseDuration(timeoutRaw)
 		if parseErr != nil {
-			log.Fatalf("Invalid timeout value: %s", timeoutRaw)
+			logger.Fatalf("Invalid timeout value: %s", timeoutRaw)
 		}
 
 		reporter := makeReporter(outputFormat)

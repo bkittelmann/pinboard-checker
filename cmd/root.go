@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/bkittelmann/pinboard-checker/pinboard"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var logger = logrus.New()
 
 var RootCmd = &cobra.Command{
 	Use:   "pinboard-checker",

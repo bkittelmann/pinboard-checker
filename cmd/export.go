@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"io"
-	"log"
 	"net/url"
 	"os"
 
@@ -30,7 +29,7 @@ var exportCmd = &cobra.Command{
 
 		readCloser, err := client.DownloadBookmarks()
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 		io.Copy(os.Stdout, readCloser)
 		readCloser.Close()

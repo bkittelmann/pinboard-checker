@@ -12,8 +12,10 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
+
+var logger = logrus.New()
 
 type Format int
 
@@ -116,7 +118,7 @@ func ParseText(input io.Reader) []Bookmark {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	return bookmarks
 }
@@ -161,7 +163,7 @@ func (client *Client) DownloadBookmarks() (io.ReadCloser, error) {
 	response, err := httpClient.Do(req)
 
 	if err != nil {
-		log.Debugf("Error %s", err)
+		logger.Debugf("Error %s", err)
 		return nil, err
 	}
 
@@ -177,7 +179,7 @@ func (client *Client) GetAllBookmarks() ([]Bookmark, error) {
 func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
 	endpoint := client.buildDeleteEndpoint(bookmark.Href)
 
-	log.Debugf("Deleting %s\n", bookmark.Href)
+	logger.Debugf("Deleting %s\n", bookmark.Href)
 
 	response, err := http.Get(endpoint)
 	if err != nil {

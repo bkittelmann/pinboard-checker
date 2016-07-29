@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/bkittelmann/pinboard-checker/pinboard"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -45,13 +44,13 @@ To read from stdout, use '-' as file name.`,
 			inputFile, _ := cmd.Flags().GetString("inputFile")
 			switch inputFile {
 			case "":
-				log.Fatalf("Invalid: No args given, and no inputFile parameter used")
+				logger.Fatalf("Invalid: No args given, and no inputFile parameter used")
 			case "-":
 				reader = os.Stdin
 			default:
 				file, err := os.Open(inputFile)
 				if err != nil {
-					log.Fatal("Could not read file with bookmarks to delete")
+					logger.Fatal("Could not read file with bookmarks to delete")
 				} else {
 					reader = file
 				}
@@ -71,7 +70,7 @@ func deleteAll(token string, endpoint *url.URL, bookmarks []pinboard.Bookmark) (
 	for _, bookmark := range bookmarks {
 		delErr := client.DeleteBookmark(bookmark)
 		if delErr != nil {
-			log.Printf("Error trying to delete %s: %s", bookmark.Href, delErr)
+			logger.Printf("Error trying to delete %s: %s", bookmark.Href, delErr)
 			errorDuringDelete = true
 		}
 	}
