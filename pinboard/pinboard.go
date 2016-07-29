@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Format int
@@ -40,14 +41,6 @@ func FormatFromString(value string) (Format, error) {
 	}
 	return 0, errors.New(fmt.Sprintf("%s is not a valid format value", value))
 }
-
-func debug(format string, args ...interface{}) {
-	if DebugEnabled {
-		log.Printf(format+"\n", args...)
-	}
-}
-
-var DebugEnabled bool
 
 type PinboardBoolean bool
 
@@ -168,7 +161,7 @@ func (client *Client) DownloadBookmarks() (io.ReadCloser, error) {
 	response, err := httpClient.Do(req)
 
 	if err != nil {
-		debug("Error %s", err)
+		log.Debugf("Error %s", err)
 		return nil, err
 	}
 
@@ -184,7 +177,7 @@ func (client *Client) GetAllBookmarks() ([]Bookmark, error) {
 func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
 	endpoint := client.buildDeleteEndpoint(bookmark.Href)
 
-	debug("Deleting %s\n", bookmark.Href)
+	log.Debugf("Deleting %s\n", bookmark.Href)
 
 	response, err := http.Get(endpoint)
 	if err != nil {

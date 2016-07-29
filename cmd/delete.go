@@ -3,12 +3,12 @@ package cmd
 import (
 	"errors"
 	"io"
-	"log"
 	"net/url"
 	"os"
 	"strings"
 
 	"github.com/bkittelmann/pinboard-checker/pinboard"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

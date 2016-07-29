@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/juju/ratelimit"
+	log "github.com/sirupsen/logrus"
 )
 
 type LookupFailure struct {
@@ -96,14 +97,14 @@ func (checker *Checker) worker(id int, checkJobs <-chan Bookmark, workgroup *syn
 
 	for bookmark := range checkJobs {
 		tokenBucket.Wait(1)
-		debug("Worker %02d: Processing job for url %s", id, bookmark.Href)
+		log.Debugf("Worker %02d: Processing job for url %s", id, bookmark.Href)
 		valid, code, err := checker.check(bookmark)
 		if !valid {
 			checker.Reporter.onFailure(LookupFailure{bookmark, code, err})
-			debug("Worker %02d: ERROR: %s %d %s", id, bookmark.Href, code, err)
+			log.Debugf("Worker %02d: ERROR: %s %d %s", id, bookmark.Href, code, err)
 		} else {
 			checker.Reporter.onSuccess(bookmark)
-			debug("Worker %02d: Success for %s\n", id, bookmark.Href)
+			log.Debugf("Worker %02d: Success for %s\n", id, bookmark.Href)
 		}
 	}
 }
