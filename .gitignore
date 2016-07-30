@@ -5,3 +5,4 @@ pinboard-checker
 notes.md
 *.out
 coverage.txt
+vendor/
