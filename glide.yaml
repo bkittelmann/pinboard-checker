@@ -1,0 +1,9 @@
+package: github.com/bkittelmann/pinboard-checker
+import:
+- package: github.com/Sirupsen/logrus
+  version: ^0.10.0
+- package: github.com/fatih/color
+  version: ^1.0.0
+- package: github.com/juju/ratelimit
+- package: github.com/spf13/cobra
+- package: github.com/spf13/viper
