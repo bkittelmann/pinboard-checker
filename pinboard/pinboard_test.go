@@ -82,8 +82,8 @@ func TestWriteJSON(t *testing.T) {
 
 func TestTxtInputFormatForReadingFromFile(t *testing.T) {
 	inputFile := strings.NewReader(`
-		http://httpbin.org/status/404
-		http://httpbin.org/status/404
+		http://example.com/a
+		http://example.com/b
 	`)
 	bookmarks := GetBookmarksFromFile(inputFile, TXT)
 	if len(bookmarks) != 2 {
