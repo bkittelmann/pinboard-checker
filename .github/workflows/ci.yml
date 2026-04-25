@@ -14,7 +14,7 @@ jobs:
       matrix:
         go: [stable, oldstable]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Set up Go ${{ matrix.go }}
         uses: actions/setup-go@v5
@@ -25,7 +25,7 @@ jobs:
         run: ./test_coverage.sh
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage.txt
           fail_ci_if_error: false
