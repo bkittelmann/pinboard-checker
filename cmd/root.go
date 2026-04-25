@@ -48,8 +48,8 @@ func init() {
 	err := viper.ReadInConfig()
 	if err != nil {
 		switch err.(type) {
-		case viper.UnsupportedConfigError:
-			// do nothing, this means no configuration is available, but flags could still be set
+		case viper.ConfigFileNotFoundError, viper.UnsupportedConfigError:
+			// no config file found or its format is unsupported; flags and env can still provide values
 		default:
 			logger.Fatalf("Error reading config file %s: %s\n", viper.ConfigFileUsed(), err.Error())
 		}
