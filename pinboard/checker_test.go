@@ -2,6 +2,9 @@ package pinboard
 
 import (
 	"bytes"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -14,8 +17,28 @@ func makeChecker() *Checker {
 	}
 }
 
+// statusServer returns a handler that reads the desired status code from
+// paths shaped like "/status/NNN" and treats "/" as 200 OK.
+func statusServer() *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/status/") {
+			code, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/status/"))
+			if err != nil {
+				http.Error(w, "bad status path", http.StatusBadRequest)
+				return
+			}
+			w.WriteHeader(code)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+}
+
 func TestCheckGoodHttpStatus(t *testing.T) {
-	bookmark := Bookmark{Href: "http://httpbin.org/html"}
+	server := statusServer()
+	defer server.Close()
+
+	bookmark := Bookmark{Href: server.URL + "/status/200"}
 	checker := makeChecker()
 	success, code, _ := checker.check(bookmark)
 	if !success {
@@ -24,7 +47,10 @@ func TestCheckGoodHttpStatus(t *testing.T) {
 }
 
 func TestCheckBadHttpStatus(t *testing.T) {
-	bookmark := Bookmark{Href: "http://httpbin.org/status/412"}
+	server := statusServer()
+	defer server.Close()
+
+	bookmark := Bookmark{Href: server.URL + "/status/412"}
 	checker := makeChecker()
 	success, code, _ := checker.check(bookmark)
 	if success {
@@ -33,12 +59,15 @@ func TestCheckBadHttpStatus(t *testing.T) {
 }
 
 func TestSimpleReporterShowingAFailure(t *testing.T) {
+	server := statusServer()
+	defer server.Close()
+
 	verbose := false
 	var buffer bytes.Buffer
 
 	bookmarks := []Bookmark{
-		Bookmark{Href: "http://httpbin.org/status/404"},
-		Bookmark{Href: "http://httpbin.org/status/200"},
+		{Href: server.URL + "/status/404"},
+		{Href: server.URL + "/status/200"},
 	}
 	checker := makeChecker()
 	checker.Reporter = NewSimpleFailureReporter(verbose, true, &buffer)
@@ -52,11 +81,14 @@ func TestSimpleReporterShowingAFailure(t *testing.T) {
 }
 
 func TestSimpleReporterShowingASucessInVerboseMode(t *testing.T) {
+	server := statusServer()
+	defer server.Close()
+
 	verbose := true
 	var buffer bytes.Buffer
 
 	bookmarks := []Bookmark{
-		Bookmark{Href: "http://httpbin.org/status/200"},
+		{Href: server.URL + "/status/200"},
 	}
 	checker := makeChecker()
 	checker.Reporter = NewSimpleFailureReporter(verbose, true, &buffer)
@@ -70,12 +102,15 @@ func TestSimpleReporterShowingASucessInVerboseMode(t *testing.T) {
 }
 
 func TestJSONReporterShowingAFailure(t *testing.T) {
+	server := statusServer()
+	defer server.Close()
+
 	verbose := false
 	var buffer bytes.Buffer
 
 	bookmarks := []Bookmark{
-		Bookmark{Href: "http://httpbin.org/status/404"},
-		Bookmark{Href: "http://httpbin.org/status/200"},
+		{Href: server.URL + "/status/404"},
+		{Href: server.URL + "/status/200"},
 	}
 
 	reporter := NewJSONReporter(verbose, &buffer)
@@ -103,12 +138,15 @@ func TestJSONReporterShowingAFailure(t *testing.T) {
 }
 
 func TestJSONReporterShowingSuccessInVerboseMode(t *testing.T) {
+	server := statusServer()
+	defer server.Close()
+
 	verbose := true
 	var buffer bytes.Buffer
 
 	bookmarks := []Bookmark{
-		Bookmark{Href: "http://httpbin.org/status/404"},
-		Bookmark{Href: "http://httpbin.org/status/200"},
+		{Href: server.URL + "/status/404"},
+		{Href: server.URL + "/status/200"},
 	}
 
 	reporter := NewJSONReporter(verbose, &buffer)
