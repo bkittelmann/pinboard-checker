@@ -3,7 +3,6 @@ package pinboard
 import (
 	"crypto/tls"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"sync"
@@ -19,9 +18,9 @@ type LookupFailure struct {
 }
 
 type Reporter interface {
-	onFailure(failure LookupFailure)
-	onSuccess(bookmark Bookmark)
-	onEnd()
+	OnFailure(failure LookupFailure)
+	OnSuccess(bookmark Bookmark)
+	OnEnd()
 }
 
 var DefaultTimeout = 10 * time.Second
@@ -86,7 +85,7 @@ func (checker *Checker) requestUrl(method string, url string) (*http.Response, e
 	if err != nil {
 		return nil, err
 	}
-	io.Copy(ioutil.Discard, response.Body)
+	io.Copy(io.Discard, response.Body)
 	response.Body.Close()
 	return response, nil
 }
@@ -99,10 +98,10 @@ func (checker *Checker) worker(id int, checkJobs <-chan Bookmark, workgroup *syn
 		logger.Debugf("Worker %02d: Processing job for url %s", id, bookmark.Href)
 		valid, code, err := checker.check(bookmark)
 		if !valid {
-			checker.Reporter.onFailure(LookupFailure{bookmark, code, err})
+			checker.Reporter.OnFailure(LookupFailure{bookmark, code, err})
 			logger.Debugf("Worker %02d: ERROR: %s %d %s", id, bookmark.Href, code, err)
 		} else {
-			checker.Reporter.onSuccess(bookmark)
+			checker.Reporter.OnSuccess(bookmark)
 			logger.Debugf("Worker %02d: Success for %s\n", id, bookmark.Href)
 		}
 	}
@@ -127,5 +126,5 @@ func (checker *Checker) Run(bookmarks []Bookmark) {
 
 	close(jobs)
 	workgroup.Wait()
-	checker.Reporter.onEnd()
+	checker.Reporter.OnEnd()
 }

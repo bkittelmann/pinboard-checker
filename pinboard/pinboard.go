@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -101,10 +100,12 @@ type Bookmark struct {
 	FailureInfo FailureInfo     `json:"failure,omitempty"`
 }
 
-func ParseJSON(input io.Reader) []Bookmark {
+func ParseJSON(input io.Reader) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	json.NewDecoder(input).Decode(&bookmarks)
-	return bookmarks
+	if err := json.NewDecoder(input).Decode(&bookmarks); err != nil {
+		return nil, err
+	}
+	return bookmarks, nil
 }
 
 func ParseText(input io.Reader) []Bookmark {
@@ -178,7 +179,7 @@ func (client *Client) GetAllBookmarks() ([]Bookmark, error) {
 		return nil, err
 	}
 	defer readCloser.Close()
-	return ParseJSON(readCloser), nil
+	return ParseJSON(readCloser)
 }
 
 func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
@@ -192,7 +193,7 @@ func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
 	}
 	defer response.Body.Close()
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return err
 	}
@@ -222,13 +223,12 @@ func NewClient(token string, endpoint *url.URL) *Client {
 	return &Client{Token: token, Endpoint: endpoint}
 }
 
-func GetBookmarksFromFile(reader io.Reader, format Format) []Bookmark {
-	var bookmarks []Bookmark
+func GetBookmarksFromFile(reader io.Reader, format Format) ([]Bookmark, error) {
 	switch format {
 	case TXT:
-		bookmarks = ParseText(reader)
+		return ParseText(reader), nil
 	case JSON:
-		bookmarks = ParseJSON(reader)
+		return ParseJSON(reader)
 	}
-	return bookmarks
+	return nil, nil
 }

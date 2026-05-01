@@ -93,7 +93,11 @@ var checkCmd = &cobra.Command{
 				defer opened.Close()
 				file = opened
 			}
-			bookmarks = pinboard.GetBookmarksFromFile(file, inputFormat)
+			var parseErr error
+			bookmarks, parseErr = pinboard.GetBookmarksFromFile(file, inputFormat)
+			if parseErr != nil {
+				logger.Fatalf("Could not parse input file: %s", parseErr)
+			}
 		} else {
 			token := validateToken()
 			endpoint := viper.GetString("endpoint")

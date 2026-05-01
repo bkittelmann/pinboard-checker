@@ -40,13 +40,13 @@ func (r SimpleFailureReporter) constructErrorMessage(failure LookupFailure) stri
 	return fmt.Sprintf("Other: %s", errorParts[len(errorParts)-1])
 }
 
-func (r SimpleFailureReporter) onFailure(failure LookupFailure) {
+func (r SimpleFailureReporter) OnFailure(failure LookupFailure) {
 	for _, writer := range r.writers {
 		fmt.Fprintf(writer, "%s%s %s\n", r.makeFailurePrefix(), failure.Bookmark.Href, r.constructErrorMessage(failure))
 	}
 }
 
-func (r SimpleFailureReporter) onSuccess(bookmark Bookmark) {
+func (r SimpleFailureReporter) OnSuccess(bookmark Bookmark) {
 	if r.verbose {
 		for _, writer := range r.writers {
 			fmt.Fprintf(writer, "%s%s\n", r.makeSuccessPrefix(), bookmark.Href)
@@ -54,7 +54,7 @@ func (r SimpleFailureReporter) onSuccess(bookmark Bookmark) {
 	}
 }
 
-func (r SimpleFailureReporter) onEnd() {
+func (r SimpleFailureReporter) OnEnd() {
 	// does nothing
 }
 
@@ -77,15 +77,15 @@ type JSONReporter struct {
 	successes []Bookmark
 }
 
-func (r *JSONReporter) onFailure(failure LookupFailure) {
+func (r *JSONReporter) OnFailure(failure LookupFailure) {
 	r.failures = append(r.failures, failure)
 }
 
-func (r *JSONReporter) onSuccess(bookmark Bookmark) {
+func (r *JSONReporter) OnSuccess(bookmark Bookmark) {
 	r.successes = append(r.successes, bookmark)
 }
 
-func (r *JSONReporter) onEnd() {
+func (r *JSONReporter) OnEnd() {
 	var failed []Bookmark
 	checkedAt := time.Now()
 
