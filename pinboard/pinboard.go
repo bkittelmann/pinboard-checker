@@ -158,22 +158,27 @@ func (client *Client) buildDeleteEndpoint(rawUrl string) string {
 
 func (client *Client) DownloadBookmarks() (io.ReadCloser, error) {
 	req, err := http.NewRequest("GET", client.buildDownloadEndpoint(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	httpClient := &http.Client{}
 	response, err := httpClient.Do(req)
-
 	if err != nil {
 		logger.Debugf("Error %s", err)
 		return nil, err
 	}
 
-	return response.Body, err
+	return response.Body, nil
 }
 
 func (client *Client) GetAllBookmarks() ([]Bookmark, error) {
 	readCloser, err := client.DownloadBookmarks()
+	if err != nil {
+		return nil, err
+	}
 	defer readCloser.Close()
-	return ParseJSON(readCloser), err
+	return ParseJSON(readCloser), nil
 }
 
 func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
