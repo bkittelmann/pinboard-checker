@@ -64,18 +64,17 @@ To read from stdout, use '-' as file name.`,
 	},
 }
 
-func deleteAll(token string, endpoint *url.URL, bookmarks []pinboard.Bookmark) (err error) {
+func deleteAll(token string, endpoint *url.URL, bookmarks []pinboard.Bookmark) error {
 	client := pinboard.NewClient(token, endpoint)
-	var errorDuringDelete bool = false
+	var errorDuringDelete bool
 	for _, bookmark := range bookmarks {
-		delErr := client.DeleteBookmark(bookmark)
-		if delErr != nil {
+		if delErr := client.DeleteBookmark(bookmark); delErr != nil {
 			logger.Warnf("Error trying to delete %s: %s", bookmark.Href, delErr)
 			errorDuringDelete = true
 		}
 	}
 	if errorDuringDelete {
-		err = errors.New("Encountered at least one error when trying to delete bookmarks")
+		return errors.New("encountered at least one error when trying to delete bookmarks")
 	}
-	return
+	return nil
 }

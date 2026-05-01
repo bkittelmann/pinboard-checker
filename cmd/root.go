@@ -65,7 +65,7 @@ func init() {
 func validateToken() string {
 	token := viper.GetString("token")
 	if len(token) == 0 {
-		logger.Fatal("Token flag is mandatory for export command")
+		logger.Fatal("Token flag is mandatory")
 	}
 	return token
 }

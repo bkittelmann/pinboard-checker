@@ -3,7 +3,6 @@ package pinboard
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -40,7 +39,7 @@ func FormatFromString(value string) (Format, error) {
 	case "txt":
 		return TXT, nil
 	}
-	return 0, errors.New(fmt.Sprintf("%s is not a valid format value", value))
+	return 0, fmt.Errorf("%s is not a valid format value", value)
 }
 
 type PinboardBoolean bool
@@ -58,9 +57,8 @@ func (p *PinboardBoolean) UnmarshalJSON(data []byte) error {
 func (p *PinboardBoolean) MarshalJSON() ([]byte, error) {
 	if *p {
 		return json.Marshal("yes")
-	} else {
-		return json.Marshal("no")
 	}
+	return json.Marshal("no")
 }
 
 type PinboardTags []string
@@ -209,11 +207,11 @@ func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
 	}
 
 	if result.Code == "item not found" {
-		return errors.New(fmt.Sprintf("%s was not found in pinboard", bookmark.Href))
+		return fmt.Errorf("%s was not found in pinboard", bookmark.Href)
 	}
 
 	if result.Code != "done" {
-		return errors.New(fmt.Sprintf("unexpected result code '%s'", result.Code))
+		return fmt.Errorf("unexpected result code '%s'", result.Code)
 	}
 
 	return err
