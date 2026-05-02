@@ -45,6 +45,53 @@ func TestDeleteExistingBookmark(t *testing.T) {
 	}
 }
 
+func TestGetAllBookmarks(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "testdata/bookmarks.json")
+	}))
+	defer server.Close()
+
+	endpointUrl, _ := url.Parse(server.URL)
+	client := NewClient("token", endpointUrl)
+
+	bookmarks, err := client.GetAllBookmarks()
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+	if len(bookmarks) != 2 {
+		t.Errorf("Expected 2 bookmarks, got %d", len(bookmarks))
+	}
+}
+
+func TestGetAllBookmarksReturnsErrorOnNetworkFailure(t *testing.T) {
+	// Point at a port that nothing is listening on so the request fails.
+	endpointUrl, _ := url.Parse("http://127.0.0.1:1")
+	client := NewClient("token", endpointUrl)
+
+	bookmarks, err := client.GetAllBookmarks()
+	if err == nil {
+		t.Error("Expected an error when the endpoint is unreachable")
+	}
+	if bookmarks != nil {
+		t.Errorf("Expected nil bookmarks on error, got %v", bookmarks)
+	}
+}
+
+func TestGetAllBookmarksReturnsErrorOnMalformedJSON(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "not json")
+	}))
+	defer server.Close()
+
+	endpointUrl, _ := url.Parse(server.URL)
+	client := NewClient("token", endpointUrl)
+
+	_, err := client.GetAllBookmarks()
+	if err == nil {
+		t.Error("Expected an error when the server returns malformed JSON")
+	}
+}
+
 func TestParseJSON(t *testing.T) {
 	file, _ := os.Open("testdata/bookmarks.json")
 	defer file.Close()
