@@ -3,10 +3,8 @@ package pinboard
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -41,7 +39,7 @@ func FormatFromString(value string) (Format, error) {
 	case "txt":
 		return TXT, nil
 	}
-	return 0, errors.New(fmt.Sprintf("%s is not a valid format value", value))
+	return 0, fmt.Errorf("%s is not a valid format value", value)
 }
 
 type PinboardBoolean bool
@@ -59,9 +57,8 @@ func (p *PinboardBoolean) UnmarshalJSON(data []byte) error {
 func (p *PinboardBoolean) MarshalJSON() ([]byte, error) {
 	if *p {
 		return json.Marshal("yes")
-	} else {
-		return json.Marshal("no")
 	}
+	return json.Marshal("no")
 }
 
 type PinboardTags []string
@@ -101,10 +98,12 @@ type Bookmark struct {
 	FailureInfo FailureInfo     `json:"failure,omitempty"`
 }
 
-func ParseJSON(input io.Reader) []Bookmark {
+func ParseJSON(input io.Reader) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	json.NewDecoder(input).Decode(&bookmarks)
-	return bookmarks
+	if err := json.NewDecoder(input).Decode(&bookmarks); err != nil {
+		return nil, err
+	}
+	return bookmarks, nil
 }
 
 func ParseText(input io.Reader) []Bookmark {
@@ -158,22 +157,27 @@ func (client *Client) buildDeleteEndpoint(rawUrl string) string {
 
 func (client *Client) DownloadBookmarks() (io.ReadCloser, error) {
 	req, err := http.NewRequest("GET", client.buildDownloadEndpoint(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	httpClient := &http.Client{}
 	response, err := httpClient.Do(req)
-
 	if err != nil {
 		logger.Debugf("Error %s", err)
 		return nil, err
 	}
 
-	return response.Body, err
+	return response.Body, nil
 }
 
 func (client *Client) GetAllBookmarks() ([]Bookmark, error) {
 	readCloser, err := client.DownloadBookmarks()
+	if err != nil {
+		return nil, err
+	}
 	defer readCloser.Close()
-	return ParseJSON(readCloser), err
+	return ParseJSON(readCloser)
 }
 
 func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
@@ -187,7 +191,7 @@ func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
 	}
 	defer response.Body.Close()
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return err
 	}
@@ -203,11 +207,11 @@ func (client *Client) DeleteBookmark(bookmark Bookmark) (err error) {
 	}
 
 	if result.Code == "item not found" {
-		return errors.New(fmt.Sprintf("%s was not found in pinboard", bookmark.Href))
+		return fmt.Errorf("%s was not found in pinboard", bookmark.Href)
 	}
 
 	if result.Code != "done" {
-		return errors.New(fmt.Sprintf("unexpected result code '%s'", result.Code))
+		return fmt.Errorf("unexpected result code '%s'", result.Code)
 	}
 
 	return err
@@ -217,13 +221,12 @@ func NewClient(token string, endpoint *url.URL) *Client {
 	return &Client{Token: token, Endpoint: endpoint}
 }
 
-func GetBookmarksFromFile(reader io.Reader, format Format) []Bookmark {
-	var bookmarks []Bookmark
+func GetBookmarksFromFile(reader io.Reader, format Format) ([]Bookmark, error) {
 	switch format {
 	case TXT:
-		bookmarks = ParseText(reader)
+		return ParseText(reader), nil
 	case JSON:
-		bookmarks = ParseJSON(reader)
+		return ParseJSON(reader)
 	}
-	return bookmarks
+	return nil, nil
 }

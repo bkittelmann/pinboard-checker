@@ -86,16 +86,32 @@ var checkCmd = &cobra.Command{
 			if inputFile == "-" {
 				file = os.Stdin
 			} else {
-				file, _ = os.Open(inputFile)
+				opened, err := os.Open(inputFile)
+				if err != nil {
+					logger.Fatalf("Could not open input file %s: %s", inputFile, err)
+				}
+				defer opened.Close()
+				file = opened
 			}
-			bookmarks = pinboard.GetBookmarksFromFile(file, inputFormat)
+			var parseErr error
+			bookmarks, parseErr = pinboard.GetBookmarksFromFile(file, inputFormat)
+			if parseErr != nil {
+				logger.Fatalf("Could not parse input file: %s", parseErr)
+			}
 		} else {
 			token := validateToken()
 			endpoint := viper.GetString("endpoint")
-			endpointUrl, _ := url.Parse(endpoint)
+			endpointUrl, err := url.Parse(endpoint)
+			if err != nil {
+				logger.Fatalf("Invalid endpoint URL %s: %s", endpoint, err)
+			}
 
 			client := pinboard.NewClient(token, endpointUrl)
-			bookmarks, _ = client.GetAllBookmarks()
+			var downloadErr error
+			bookmarks, downloadErr = client.GetAllBookmarks()
+			if downloadErr != nil {
+				logger.Fatalf("Could not download bookmarks: %s", downloadErr)
+			}
 		}
 
 		var tlsConfig *tls.Config

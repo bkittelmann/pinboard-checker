@@ -125,7 +125,10 @@ func TestJSONReporterShowingAFailure(t *testing.T) {
 		t.Errorf("One failure should have been reported, %d found", failureCount)
 	}
 
-	failedBookmarks := ParseJSON(bytes.NewReader(buffer.Bytes()))
+	failedBookmarks, err := ParseJSON(bytes.NewReader(buffer.Bytes()))
+	if err != nil {
+		t.Fatalf("Unexpected error parsing JSON output: %s", err)
+	}
 	failedBookmarksCount := len(failedBookmarks)
 	if failedBookmarksCount != 1 {
 		t.Errorf("Expected one failed bookmark to be present in generated JSON, %d found", failedBookmarksCount)
@@ -159,7 +162,10 @@ func TestJSONReporterShowingSuccessInVerboseMode(t *testing.T) {
 		t.Errorf("One failure should have been reported, %d found", successCount)
 	}
 
-	failedBookmarks := ParseJSON(bytes.NewReader(buffer.Bytes()))
+	failedBookmarks, err := ParseJSON(bytes.NewReader(buffer.Bytes()))
+	if err != nil {
+		t.Fatalf("Unexpected error parsing JSON output: %s", err)
+	}
 	failedBookmarksCount := len(failedBookmarks)
 	if failedBookmarksCount != 2 {
 		t.Errorf("Expected two bookmarks to be present in generated JSON, %d found", failedBookmarksCount)
